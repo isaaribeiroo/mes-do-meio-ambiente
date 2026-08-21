@@ -13,77 +13,227 @@
             --amarelo-suave: #fffde7;
             --cinza-fundo: #f4f6f4;
             --texto: #1a251a;
+            --vermelho-admin: #d32f2f;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--cinza-fundo); color: var(--texto); line-height: 1.6; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        body { 
+            background-color: var(--cinza-fundo); 
+            color: var(--texto); 
+            line-height: 1.6; 
+        }
 
         header {
             background: linear-gradient(135deg, var(--verde-escuro), var(--verde-principal));
-            color: #ffffff; padding: 2rem 1rem; text-align: center;
+            color: #ffffff; 
+            padding: 2rem 1rem; 
+            text-align: center;
             border-bottom: 6px solid var(--amarelo-principal);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
         }
 
-        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .container { 
+            max-width: 900px; 
+            margin: 2rem auto; 
+            padding: 0 1rem; 
+        }
 
         .card {
-            background: white; border-radius: 10px; padding: 1.5rem;
-            margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--verde-principal);
+            background: white; 
+            border-radius: 12px; 
+            padding: 1.5rem;
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--verde-principal);
         }
         
-        .card-admin { border-left-color: #d32f2f; background-color: #ffebee; }
-        .card h3 { color: var(--verde-escuro); margin-bottom: 1rem; }
-        .card-admin h3 { color: #c62828; }
+        .card-admin { 
+            border-left-color: var(--vermelho-admin); 
+            background-color: #ffebee; 
+        }
+
+        .card h3 { 
+            color: var(--verde-escuro); 
+            margin-bottom: 1rem; 
+            font-size: 1.25rem;
+        }
+
+        .card-admin h3 { 
+            color: #c62828; 
+        }
 
         input[type="text"], textarea {
-            width: 100%; padding: 0.8rem; margin-top: 0.5rem; margin-bottom: 1rem;
-            border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;
+            width: 100%; 
+            padding: 0.8rem; 
+            margin-top: 0.5rem; 
+            margin-bottom: 1rem;
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--verde-principal);
+            outline: none;
         }
 
         button.btn-acao {
-            width: 100%; padding: 0.8rem; margin-bottom: 1rem;
-            background-color: var(--amarelo-principal); color: var(--verde-escuro);
-            font-weight: bold; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s;
+            width: 100%; 
+            padding: 0.9rem; 
+            margin-top: 0.5rem;
+            background-color: var(--amarelo-principal); 
+            color: var(--verde-escuro);
+            font-weight: bold; 
+            font-size: 1rem; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: background 0.2s, transform 0.1s;
         }
-        button.btn-acao:hover { background-color: #f9a825; }
 
-        .selector-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-        .selector-group input[type="radio"] { display: none; }
-        .selector-group label {
-            padding: 0.5rem 1rem; background-color: #e0e0e0; border-radius: 20px;
-            cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.3s;
+        button.btn-acao:hover { 
+            background-color: #f9a825; 
         }
+
+        button.btn-acao:active {
+            transform: scale(0.99);
+        }
+
+        .selector-group { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 0.5rem; 
+            margin-bottom: 1rem; 
+        }
+
+        .selector-group input[type="radio"] { 
+            display: none; 
+        }
+
+        .selector-group label {
+            padding: 0.6rem 1rem; 
+            background-color: #e0e0e0; 
+            border-radius: 20px;
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
         .selector-group input[type="radio"]:checked + label {
-            background-color: var(--verde-principal); color: white;
+            background-color: var(--verde-principal); 
+            color: white;
+            box-shadow: 0 2px 6px rgba(46, 125, 50, 0.4);
         }
 
         .user-info {
-            display: flex; justify-content: space-between; align-items: center;
-            background-color: var(--amarelo-suave); padding: 1rem; border-radius: 8px;
-            margin-bottom: 1.5rem; border: 1px solid var(--amarelo-principal);
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background-color: var(--amarelo-suave); 
+            padding: 1rem; 
+            border-radius: 8px;
+            margin-bottom: 1.5rem; 
+            border: 1px solid var(--amarelo-principal);
         }
-        .btn-trocar { padding: 0.4rem 1rem; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-trocar:hover { background-color: #b71c1c; }
 
-        .post { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e0e0e0; }
-        .post-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
-        .post-author { font-weight: bold; color: var(--verde-escuro); }
-        .post-tag { background: var(--amarelo-principal); padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: bold; font-size: 0.8rem; }
-        .post-content { margin-top: 0.8rem; font-size: 1rem; }
+        .btn-trocar { 
+            padding: 0.5rem 1rem; 
+            background-color: var(--vermelho-admin); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background 0.2s;
+        }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; }
-        th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-        th { background-color: #c62828; color: white; }
+        .btn-trocar:hover { 
+            background-color: #b71c1c; 
+        }
 
-        .hidden { display: none !important; }
+        .post { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 1.2rem; 
+            margin-bottom: 1rem; 
+            border: 1px solid #e0e0e0; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .post-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 0.9rem; 
+            color: #555; 
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .post-author { 
+            font-weight: bold; 
+            color: var(--verde-escuro); 
+        }
+
+        .post-tag { 
+            background: var(--amarelo-principal); 
+            color: var(--verde-escuro);
+            padding: 0.2rem 0.6rem; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 0.8rem; 
+        }
+
+        .post-content { 
+            margin-top: 0.8rem; 
+            font-size: 1rem; 
+            word-wrap: break-word;
+        }
+
+        .post-time {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 1rem; 
+            background: white; 
+        }
+
+        th, td { 
+            border: 1px solid #ccc; 
+            padding: 0.6rem; 
+            text-align: left; 
+        }
+
+        th { 
+            background-color: #c62828; 
+            color: white; 
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // COLOQUE SUAS CHAVES REAIS DO FIREBASE AQUI
+        // Substitua pelas credenciais válidas do seu projeto Firebase
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
             authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -99,7 +249,6 @@
         const ADMIN_EMAIL = "isabela.ribeiro23@escola.pr.gov.br";
         let alunoLogado = localStorage.getItem('aluno_nome') || null;
         let alunoTurma = localStorage.getItem('aluno_turma') || null;
-        let unsubscribePosts = null;
 
         const identificationSection = document.getElementById('identification-section');
         const appSection = document.getElementById('app-section');
@@ -147,8 +296,9 @@
             appSection.classList.remove('hidden');
             userNameSpan.textContent = `${nome} (${turma})`;
 
-            // Se for a Isabela, mostra painel admin e título geral
-            if (nome.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            const ehAdmin = (nome.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+            if (ehAdmin) {
                 adminSection.classList.remove('hidden');
                 tituloMural.textContent = "🏆 Mural Geral da Escola (Visão da Professora)";
             } else {
@@ -169,6 +319,10 @@
             }
 
             const mensagem = document.getElementById('mensagem-input').value.trim();
+            if (!mensagem) {
+                alert("Por favor, descreva como foi realizar o desafio.");
+                return;
+            }
 
             try {
                 await addDoc(collection(db, "postagens"), {
@@ -191,24 +345,29 @@
         function carregarPostagens() {
             const q = query(collection(db, "postagens"), orderBy("data", "desc"));
             
-            unsubscribePosts = onSnapshot(q, (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                 postsContainer.innerHTML = '';
                 let participantesUnicos = new Map();
                 let pontuacaoSalas = {};
 
-                const ehIsabela = (alunoLogado && alunoLogado.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+                const ehAdmin = (alunoLogado && alunoLogado.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+                if (snapshot.empty) {
+                    postsContainer.innerHTML = '<p style="text-align:center; color:#777; margin-top:1rem;">Nenhuma publicação ainda. Seja o primeiro!</p>';
+                    return;
+                }
 
                 snapshot.forEach((doc) => {
                     const post = doc.data();
                     
                     if (post.autor && post.turma) {
                         participantesUnicos.set(post.autor, post.turma);
-                        // Cada postagem agora vale 5 pontos
                         pontuacaoSalas[post.turma] = (pontuacaoSalas[post.turma] || 0) + 5;
                     }
 
-                    // Se for a Isabela, mostra TUDO. Se for aluno comum, mostra APENAS os posts da sua sala
-                    if (ehIsabela || post.turma === alunoTurma) {
+                    if (ehAdmin || post.turma === alunoTurma) {
+                        const dataFormatada = post.data ? new Date(post.data.toDate()).toLocaleString('pt-BR') : 'Enviando...';
+                        
                         const postEl = document.createElement('div');
                         postEl.className = 'post';
                         postEl.innerHTML = `
@@ -217,12 +376,13 @@
                                 <span class="post-tag">${escapeHTML(post.desafio)}</span>
                             </div>
                             <div class="post-content">${escapeHTML(post.mensagem)}</div>
+                            <div class="post-time">${dataFormatada}</div>
                         `;
                         postsContainer.appendChild(postEl);
                     }
                 });
 
-                if (ehIsabela) {
+                if (ehAdmin) {
                     atualizarPainelAdmin(participantesUnicos, pontuacaoSalas);
                 }
             });
@@ -247,7 +407,9 @@
         }
 
         function escapeHTML(str) {
-            return str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : '';
+            return str ? str.replace(/[&<>'"]/g, tag => ({ 
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' 
+            }[tag] || tag)) : '';
         }
     </script>
 </head>
@@ -277,7 +439,7 @@
                 <input type="radio" id="em3" name="turma-inicial" value="3º Ano EM"><label for="em3">3º EM</label>
             </div>
 
-            <button id="btn-entrar" class="btn-acao">Acessar Mural</button>
+            <button type="button" id="btn-entrar" class="btn-acao">Acessar Mural</button>
         </div>
 
         <!-- Aplicativo Principal -->
@@ -285,7 +447,7 @@
             
             <div class="user-info">
                 <span>Conectado como: <strong id="user-name"></strong></span>
-                <button id="btn-trocar" class="btn-trocar">Trocar Nome</button>
+                <button type="button" id="btn-trocar" class="btn-trocar">Trocar Nome</button>
             </div>
 
             <!-- Painel Exclusivo da Isabela -->
@@ -307,7 +469,7 @@
                 <div id="admin-quem" style="font-size: 0.9rem; color: #555; background: white; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto;"></div>
             </div>
 
-            <!-- Formulário com as 5 Semanas Prontas -->
+            <!-- Formulário de Desafios -->
             <div class="card">
                 <h3>📢 Registrar Ação Verde</h3>
                 <form id="form-post">
