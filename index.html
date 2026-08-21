@@ -36,7 +36,7 @@
         .card h3 { color: var(--verde-escuro); margin-bottom: 1rem; }
         .card-admin h3 { color: #c62828; }
 
-        input[type="email"], input[type="password"], input[type="text"], textarea {
+        input[type="text"], textarea {
             width: 100%; padding: 0.8rem; margin-top: 0.5rem; margin-bottom: 1rem;
             border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;
         }
@@ -63,8 +63,8 @@
             background-color: var(--amarelo-suave); padding: 1rem; border-radius: 8px;
             margin-bottom: 1.5rem; border: 1px solid var(--amarelo-principal);
         }
-        .btn-logout { padding: 0.4rem 1rem; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-logout:hover { background-color: #b71c1c; }
+        .btn-trocar { padding: 0.4rem 1rem; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-trocar:hover { background-color: #b71c1c; }
 
         .post { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e0e0e0; }
         .post-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
@@ -81,7 +81,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // COLOQUE SUAS CHAVES REAIS DO FIREBASE AQUI
@@ -90,103 +89,114 @@
             authDomain: "SEU_PROJETO.firebaseapp.com",
             projectId: "SEU_PROJETO",
             storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "SEU_SENDER_ID",
-            appId: "SEU_APP_ID"
+            messagingSenderId: "SUA_SENDER_ID",
+            appId: "SUA_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const ADMIN_EMAIL = "isabela.ribeiro23@escola.pr.gov.br";
-        let usuarioAtual = null;
+        const ADMIN_NOME_OU_EMAIL = "isabela.ribeiro23@escola.pr.gov.br"; // Defina seu identificador aqui
+        let alunoLogado = localStorage.getItem('aluno_nome') || null;
+        let alunoTurma = localStorage.getItem('aluno_turma') || null;
         let unsubscribePosts = null;
 
-        const authSection = document.getElementById('auth-section');
+        const identificationSection = document.getElementById('identification-section');
         const appSection = document.getElementById('app-section');
         const adminSection = document.getElementById('admin-section');
-        const userEmailSpan = document.getElementById('user-email');
+        const userNameSpan = document.getElementById('user-name');
         const postsContainer = document.getElementById('posts-container');
 
-        document.getElementById('btn-login').addEventListener('click', async () => {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            if(!email || !password) { alert("Preencha e-mail e senha."); return; }
-            try { await signInWithEmailAndPassword(auth, email, password); } 
-            catch (error) { alert("Erro ao entrar: " + error.message); }
-        });
-
-        document.getElementById('btn-register').addEventListener('click', async () => {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            if(!email || !password) { alert("Preencha e-mail e senha."); return; }
-            try { 
-                await createUserWithEmailAndPassword(auth, email, password); 
-                alert("Conta criada com sucesso!");
-            } catch (error) { alert("Erro ao cadastrar: " + error.message); }
-        });
-
-        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                usuarioAtual = user;
-                userEmailSpan.textContent = user.email;
-                authSection.classList.add('hidden');
-                appSection.classList.remove('hidden');
-                
-                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                    adminSection.classList.remove('hidden');
-                } else {
-                    adminSection.classList.add('hidden');
-                }
-
-                carregarPostagens();
-            } else {
-                usuarioAtual = null;
-                authSection.classList.remove('hidden');
-                appSection.classList.add('hidden');
-                adminSection.classList.add('hidden');
-                if (unsubscribePosts) unsubscribePosts();
+        // Verificar se já está identificado ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            if (alunoLogado && alunoTurma) {
+                ativarApp(alunoLogado, alunoTurma);
             }
         });
 
-        document.getElementById('form-post').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const turmaSelecionada = document.querySelector('input[name="turma"]:checked');
-            
+        // Botão para entrar informando Nome e Série
+        document.getElementById('btn-entrar').addEventListener('click', () => {
+            const nome = document.getElementById('input-nome').value.trim();
+            const turmaSelecionada = document.querySelector('input[name="turma-inicial"]:checked');
+
+            if (!nome) {
+                alert("Por favor, digite o seu nome completo.");
+                return;
+            }
             if (!turmaSelecionada) {
-                alert("Selecione sua série nos botões!");
+                alert("Por favor, selecione a sua série.");
                 return;
             }
 
+            alunoLogado = nome;
+            alunoTurma = turmaSelecionada.value;
+
+            // Salva no navegador para não precisar digitar toda vez
+            localStorage.setItem('aluno_nome', alunoLogado);
+            localStorage.setItem('aluno_turma', alunoTurma);
+
+            ativarApp(alunoLogado, alunoTurma);
+        });
+
+        // Botão para trocar de usuário/nome
+        document.getElementById('btn-trocar').addEventListener('click', () => {
+            localStorage.removeItem('aluno_nome');
+            localStorage.removeItem('aluno_turma');
+            location.reload();
+        });
+
+        function ativarApp(nome, turma) {
+            identificationSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+            userNameSpan.textContent = `${nome} (${turma})`;
+
+            // Verifica se é a Isabela para mostrar o painel admin
+            if (nome.toLowerCase() === ADMIN_NOME_OU_EMAIL.toLowerCase()) {
+                adminSection.classList.remove('hidden');
+            } else {
+                adminSection.classList.add('hidden');
+            }
+
+            carregarPostagens();
+        }
+
+        // Enviar Postagem
+        document.getElementById('form-post').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const desafio = document.getElementById('desafio-input').value.trim();
+            const mensagem = document.getElementById('mensagem-input').value.trim();
+
             try {
                 await addDoc(collection(db, "postagens"), {
-                    autor: usuarioAtual.email,
-                    turma: turmaSelecionada.value,
-                    desafio: document.getElementById('desafio-input').value.trim(),
-                    mensagem: document.getElementById('mensagem-input').value.trim(),
+                    autor: alunoLogado,
+                    turma: alunoTurma,
+                    desafio: desafio,
+                    mensagem: mensagem,
                     data: serverTimestamp()
                 });
-                document.getElementById('form-post').reset();
-                alert("Desafio publicado!");
+                document.getElementById('desafio-input').value = '';
+                document.getElementById('mensagem-input').value = '';
+                alert("Desafio publicado com sucesso!");
             } catch (error) {
                 alert("Erro ao publicar: " + error.message);
             }
         });
 
+        // Carregar Postagens e Dados do Painel
         function carregarPostagens() {
             const q = query(collection(db, "postagens"), orderBy("data", "desc"));
             
             unsubscribePosts = onSnapshot(q, (snapshot) => {
                 postsContainer.innerHTML = '';
-                let participantesUnicos = new Set();
+                let participantesUnicos = new Map(); // Guarda Nome -> Série
                 let pontuacaoSalas = {};
 
                 snapshot.forEach((doc) => {
                     const post = doc.data();
-                    if(post.autor) participantesUnicos.add(post.autor);
-                    if(post.turma) {
+                    
+                    if (post.autor && post.turma) {
+                        participantesUnicos.set(post.autor, post.turma);
                         pontuacaoSalas[post.turma] = (pontuacaoSalas[post.turma] || 0) + 10;
                     }
 
@@ -194,7 +204,7 @@
                     postEl.className = 'post';
                     postEl.innerHTML = `
                         <div class="post-header">
-                            <span class="post-author">${escapeHTML(post.autor)} - ${escapeHTML(post.turma)}</span>
+                            <span class="post-author">${escapeHTML(post.autor)} (${escapeHTML(post.turma)})</span>
                             <span class="post-tag">${escapeHTML(post.desafio)}</span>
                         </div>
                         <div class="post-content">${escapeHTML(post.mensagem)}</div>
@@ -202,15 +212,20 @@
                     postsContainer.appendChild(postEl);
                 });
 
-                if (usuarioAtual && usuarioAtual.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                if (alunoLogado && alunoLogado.toLowerCase() === ADMIN_NOME_OU_EMAIL.toLowerCase()) {
                     atualizarPainelAdmin(participantesUnicos, pontuacaoSalas);
                 }
             });
         }
 
-        function atualizarPainelAdmin(participantes, pontuacao) {
-            document.getElementById('admin-qtd-pessoas').textContent = participantes.size;
-            document.getElementById('admin-quem').innerHTML = Array.from(participantes).join('<br>') || 'Nenhum participante';
+        function atualizarPainelAdmin(participantesMap, pontuacao) {
+            document.getElementById('admin-qtd-pessoas').textContent = participantesMap.size;
+            
+            let listaHTML = "";
+            participantesMap.forEach((turma, nome) => {
+                listaHTML += `• ${escapeHTML(nome)} - <i>${escapeHTML(turma)}</i><br>`;
+            });
+            document.getElementById('admin-quem').innerHTML = listaHTML || 'Nenhum participante ainda';
 
             const rankingDiv = document.getElementById('admin-ranking');
             rankingDiv.innerHTML = '';
@@ -234,58 +249,67 @@
 
     <div class="container">
 
-        <div id="auth-section" class="card">
-            <h3>🔑 Acesso ao Mural</h3>
-            <input type="email" id="email" placeholder="Seu e-mail escolar" required>
-            <input type="password" id="password" placeholder="Sua senha" required>
-            <button id="btn-login" class="btn-acao">Entrar</button>
-            <button id="btn-register" class="btn-acao" style="background-color: var(--verde-claro); color: white;">Criar Conta</button>
+        <!-- ETAPA 1: Identificação Simples (Substituiu o login) -->
+        <div id="identification-section" class="card">
+            <h3>👋 Olá! Identifique-se para participar</h3>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #555;">Digite seu nome e selecione sua turma para acessar o mural.</p>
+            
+            <input type="text" id="input-nome" placeholder="Seu Nome Completo (ou digite seu e-mail da escola)" required>
+            
+            <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Sua Série:</label>
+            <div class="turma-selector">
+                <input type="radio" id="t6" name="turma-inicial" value="6º Ano EF"><label for="t6">6º Ano</label>
+                <input type="radio" id="t7" name="turma-inicial" value="7º Ano EF"><label for="t7">7º Ano</label>
+                <input type="radio" id="t8" name="turma-inicial" value="8º Ano EF"><label for="t8">8º Ano</label>
+                <input type="radio" id="t9" name="turma-inicial" value="9º Ano EF"><label for="t9">9º Ano</label>
+                <input type="radio" id="em1" name="turma-inicial" value="1º Ano EM"><label for="em1">1º EM</label>
+                <input type="radio" id="em2" name="turma-inicial" value="2º Ano EM"><label for="em2">2º EM</label>
+                <input type="radio" id="em3" name="turma-inicial" value="3º Ano EM"><label for="em3">3º EM</label>
+            </div>
+
+            <button id="btn-entrar" class="btn-acao">Acessar Mural</button>
         </div>
 
+        <!-- ETAPA 2: Aplicativo Principal -->
         <div id="app-section" class="hidden">
             
             <div class="user-info">
-                <span>Bem-vindo(a), <strong id="user-email"></strong></span>
-                <button id="btn-logout" class="btn-logout">Sair</button>
+                <span>Conectado como: <strong id="user-name"></strong></span>
+                <button id="btn-trocar" class="btn-trocar">Trocar Nome</button>
             </div>
 
+            <!-- PAINEL EXCLUSIVO DA ISABELA -->
             <div id="admin-section" class="card card-admin hidden">
                 <h3>👑 Painel de Controle (Isabela)</h3>
-                <p><strong>Total de Alunos Participantes:</strong> <span id="admin-qtd-pessoas">0</span></p>
+                <p><strong>Total de Alunos Diferentes que Participaram:</strong> <span id="admin-qtd-pessoas">0</span></p>
+                
                 <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ccc;">
-                <h4>🏆 Ranking das Salas</h4>
+                
+                <h4>🏆 Ranking das Salas (Pontuação)</h4>
                 <table>
-                    <thead><tr><th>Série</th><th>Pontuação</th></tr></thead>
+                    <thead><tr><th>Série</th><th>Pontuação Total</th></tr></thead>
                     <tbody id="admin-ranking"></tbody>
                 </table>
+
                 <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ccc;">
-                <h4>👥 Alunos Participantes:</h4>
-                <div id="admin-quem" style="font-size: 0.9rem; color: #555; background: white; padding: 10px; border-radius: 5px;"></div>
+                
+                <h4>👥 Quem já participou (Nome e Série):</h4>
+                <div id="admin-quem" style="font-size: 0.9rem; color: #555; background: white; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto;"></div>
             </div>
 
+            <!-- Formulário de Postagem -->
             <div class="card">
                 <h3>📢 Registrar Ação Verde</h3>
                 <form id="form-post">
-                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Selecione sua Série:</label>
-                    <div class="turma-selector">
-                        <input type="radio" id="t6" name="turma" value="6º Ano EF"><label for="t6">6º Ano</label>
-                        <input type="radio" id="t7" name="turma" value="7º Ano EF"><label for="t7">7º Ano</label>
-                        <input type="radio" id="t8" name="turma" value="8º Ano EF"><label for="t8">8º Ano</label>
-                        <input type="radio" id="t9" name="turma" value="9º Ano EF"><label for="t9">9º Ano</label>
-                        <input type="radio" id="em1" name="turma" value="1º Ano EM"><label for="em1">1º EM</label>
-                        <input type="radio" id="em2" name="turma" value="2º Ano EM"><label for="em2">2º EM</label>
-                        <input type="radio" id="em3" name="turma" value="3º Ano EM"><label for="em3">3º EM</label>
-                    </div>
-
-                    <input type="text" id="desafio-input" placeholder="Qual foi o desafio?" required>
-                    <textarea id="mensagem-input" rows="3" placeholder="Detalhes de como você fez..." required></textarea>
+                    <input type="text" id="desafio-input" placeholder="Qual foi o desafio? (ex: Plantar uma árvore)" required>
+                    <textarea id="mensagem-input" rows="3" placeholder="Detalhes de como foi realizar a ação..." required></textarea>
                     
-                    <button type="submit" class="btn-acao">Publicar Desafio</button>
+                    <button type="submit" class="btn-acao">Publicar no Mural</button>
                 </form>
             </div>
 
-            <h2>Mural da Escola</h2>
-            <div id="posts-container"></div>
+            <h2>🏆 Mural da Escola</h2>
+            <div id="posts-container" style="margin-top: 1rem;"></div>
         </div>
 
     </div>
