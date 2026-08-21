@@ -48,13 +48,14 @@
         }
         button.btn-acao:hover { background-color: #f9a825; }
 
-        .turma-selector { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-        .turma-selector input[type="radio"] { display: none; }
-        .turma-selector label {
+        /* Seletores em Botões (Séries e Semanas) */
+        .selector-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .selector-group input[type="radio"] { display: none; }
+        .selector-group label {
             padding: 0.5rem 1rem; background-color: #e0e0e0; border-radius: 20px;
             cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.3s;
         }
-        .turma-selector input[type="radio"]:checked + label {
+        .selector-group input[type="radio"]:checked + label {
             background-color: var(--verde-principal); color: white;
         }
 
@@ -96,7 +97,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const ADMIN_NOME_OU_EMAIL = "isabela.ribeiro23@escola.pr.gov.br"; // Defina seu identificador aqui
+        const ADMIN_NOME_OU_EMAIL = "isabela.ribeiro23@escola.pr.gov.br";
         let alunoLogado = localStorage.getItem('aluno_nome') || null;
         let alunoTurma = localStorage.getItem('aluno_turma') || null;
         let unsubscribePosts = null;
@@ -107,20 +108,18 @@
         const userNameSpan = document.getElementById('user-name');
         const postsContainer = document.getElementById('posts-container');
 
-        // Verificar se já está identificado ao carregar a página
         window.addEventListener('DOMContentLoaded', () => {
             if (alunoLogado && alunoTurma) {
                 ativarApp(alunoLogado, alunoTurma);
             }
         });
 
-        // Botão para entrar informando Nome e Série
         document.getElementById('btn-entrar').addEventListener('click', () => {
             const nome = document.getElementById('input-nome').value.trim();
             const turmaSelecionada = document.querySelector('input[name="turma-inicial"]:checked');
 
             if (!nome) {
-                alert("Por favor, digite o seu nome completo.");
+                alert("Por favor, digite o seu nome completo ou e-mail.");
                 return;
             }
             if (!turmaSelecionada) {
@@ -131,14 +130,12 @@
             alunoLogado = nome;
             alunoTurma = turmaSelecionada.value;
 
-            // Salva no navegador para não precisar digitar toda vez
             localStorage.setItem('aluno_nome', alunoLogado);
             localStorage.setItem('aluno_turma', alunoTurma);
 
             ativarApp(alunoLogado, alunoTurma);
         });
 
-        // Botão para trocar de usuário/nome
         document.getElementById('btn-trocar').addEventListener('click', () => {
             localStorage.removeItem('aluno_nome');
             localStorage.removeItem('aluno_turma');
@@ -150,7 +147,6 @@
             appSection.classList.remove('hidden');
             userNameSpan.textContent = `${nome} (${turma})`;
 
-            // Verifica se é a Isabela para mostrar o painel admin
             if (nome.toLowerCase() === ADMIN_NOME_OU_EMAIL.toLowerCase()) {
                 adminSection.classList.remove('hidden');
             } else {
@@ -160,36 +156,43 @@
             carregarPostagens();
         }
 
-        // Enviar Postagem
+        // Enviar Postagem com o Desafio da Semana Escolhido
         document.getElementById('form-post').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const desafio = document.getElementById('desafio-input').value.trim();
+            const desafioSelecionado = document.querySelector('input[name="desafio"]:checked');
+            if (!desafioSelecionado) {
+                alert("Por favor, selecione qual semana de desafio você concluiu!");
+                return;
+            }
+
             const mensagem = document.getElementById('mensagem-input').value.trim();
 
             try {
                 await addDoc(collection(db, "postagens"), {
                     autor: alunoLogado,
                     turma: alunoTurma,
-                    desafio: desafio,
+                    desafio: desafioSelecionado.value,
                     mensagem: mensagem,
                     data: serverTimestamp()
                 });
-                document.getElementById('desafio-input').value = '';
+                
                 document.getElementById('mensagem-input').value = '';
-                alert("Desafio publicado com sucesso!");
+                // Limpa a seleção do rádio
+                desafioSelecionado.checked = false;
+                
+                alert("Desafio publicado com sucesso! (+10 pontos para sua sala)");
             } catch (error) {
                 alert("Erro ao publicar: " + error.message);
             }
         });
 
-        // Carregar Postagens e Dados do Painel
         function carregarPostagens() {
             const q = query(collection(db, "postagens"), orderBy("data", "desc"));
             
             unsubscribePosts = onSnapshot(q, (snapshot) => {
                 postsContainer.innerHTML = '';
-                let participantesUnicos = new Map(); // Guarda Nome -> Série
+                let participantesUnicos = new Map();
                 let pontuacaoSalas = {};
 
                 snapshot.forEach((doc) => {
@@ -249,15 +252,15 @@
 
     <div class="container">
 
-        <!-- ETAPA 1: Identificação Simples (Substituiu o login) -->
+        <!-- Tela de Identificação Inicial -->
         <div id="identification-section" class="card">
             <h3>👋 Olá! Identifique-se para participar</h3>
             <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #555;">Digite seu nome e selecione sua turma para acessar o mural.</p>
             
-            <input type="text" id="input-nome" placeholder="Seu Nome Completo (ou digite seu e-mail da escola)" required>
+            <input type="text" id="input-nome" placeholder="Seu Nome Completo (ou e-mail da escola)" required>
             
             <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Sua Série:</label>
-            <div class="turma-selector">
+            <div class="selector-group">
                 <input type="radio" id="t6" name="turma-inicial" value="6º Ano EF"><label for="t6">6º Ano</label>
                 <input type="radio" id="t7" name="turma-inicial" value="7º Ano EF"><label for="t7">7º Ano</label>
                 <input type="radio" id="t8" name="turma-inicial" value="8º Ano EF"><label for="t8">8º Ano</label>
@@ -270,7 +273,7 @@
             <button id="btn-entrar" class="btn-acao">Acessar Mural</button>
         </div>
 
-        <!-- ETAPA 2: Aplicativo Principal -->
+        <!-- Aplicativo Principal -->
         <div id="app-section" class="hidden">
             
             <div class="user-info">
@@ -278,7 +281,7 @@
                 <button id="btn-trocar" class="btn-trocar">Trocar Nome</button>
             </div>
 
-            <!-- PAINEL EXCLUSIVO DA ISABELA -->
+            <!-- Painel Exclusivo da Isabela -->
             <div id="admin-section" class="card card-admin hidden">
                 <h3>👑 Painel de Controle (Isabela)</h3>
                 <p><strong>Total de Alunos Diferentes que Participaram:</strong> <span id="admin-qtd-pessoas">0</span></p>
@@ -297,12 +300,37 @@
                 <div id="admin-quem" style="font-size: 0.9rem; color: #555; background: white; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto;"></div>
             </div>
 
-            <!-- Formulário de Postagem -->
+            <!-- Formulário com as 5 Semanas Prontas -->
             <div class="card">
                 <h3>📢 Registrar Ação Verde</h3>
                 <form id="form-post">
-                    <input type="text" id="desafio-input" placeholder="Qual foi o desafio? (ex: Plantar uma árvore)" required>
-                    <textarea id="mensagem-input" rows="3" placeholder="Detalhes de como foi realizar a ação..." required></textarea>
+                    
+                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Selecione o Desafio Realizado:</label>
+                    <div class="selector-group" style="flex-direction: column; gap: 0.4rem;">
+                        <div>
+                            <input type="radio" id="sem1" name="desafio" value="Semana 1: Guardião da Água">
+                            <label for="sem1" style="display: block;">💧 Semana 1: Guardião da Água (Economia de água)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="sem2" name="desafio" value="Semana 2: Menos Plástico">
+                            <label for="sem2" style="display: block;">🛍️ Semana 2: Menos Plástico (Reduzir sacolas/descartáveis)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="sem3" name="desafio" value="Semana 3: Reciclagem Certa">
+                            <label for="sem3" style="display: block;">♻️ Semana 3: Reciclagem Certa (Separar corretamente o lixo)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="sem4" name="desafio" value="Semana 4: Energia Consciente">
+                            <label for="sem4" style="display: block;">💡 Semana 4: Energia Consciente (Apagar luzes desnecessárias)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="sem5" name="desafio" value="Semana 5: Semeando o Futuro">
+                            <label for="sem5" style="display: block;">🌱 Semana 5: Semeando o Futuro (Plantar muda ou cuidar de planta)</label>
+                        </div>
+                    </div>
+
+                    <label style="font-weight: bold; display: block; margin-top: 1rem; margin-bottom: 0.3rem;">Detalhes da Ação:</label>
+                    <textarea id="mensagem-input" rows="3" placeholder="Conte como foi realizar este desafio..." required></textarea>
                     
                     <button type="submit" class="btn-acao">Publicar no Mural</button>
                 </form>
