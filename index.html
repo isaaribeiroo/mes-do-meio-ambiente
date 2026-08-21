@@ -48,7 +48,6 @@
         }
         button.btn-acao:hover { background-color: #f9a825; }
 
-        /* Seletores em Botões (Séries e Semanas) */
         .selector-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
         .selector-group input[type="radio"] { display: none; }
         .selector-group label {
@@ -90,14 +89,14 @@
             authDomain: "SEU_PROJETO.firebaseapp.com",
             projectId: "SEU_PROJETO",
             storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "SUA_SENDER_ID",
+            messagingSenderId: "SEU_SENDER_ID",
             appId: "SUA_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const ADMIN_NOME_OU_EMAIL = "isabela.ribeiro23@escola.pr.gov.br";
+        const ADMIN_EMAIL = "isabela.ribeiro23@escola.pr.gov.br";
         let alunoLogado = localStorage.getItem('aluno_nome') || null;
         let alunoTurma = localStorage.getItem('aluno_turma') || null;
         let unsubscribePosts = null;
@@ -107,6 +106,7 @@
         const adminSection = document.getElementById('admin-section');
         const userNameSpan = document.getElementById('user-name');
         const postsContainer = document.getElementById('posts-container');
+        const tituloMural = document.getElementById('titulo-mural');
 
         window.addEventListener('DOMContentLoaded', () => {
             if (alunoLogado && alunoTurma) {
@@ -147,16 +147,18 @@
             appSection.classList.remove('hidden');
             userNameSpan.textContent = `${nome} (${turma})`;
 
-            if (nome.toLowerCase() === ADMIN_NOME_OU_EMAIL.toLowerCase()) {
+            // Se for a Isabela, mostra painel admin e título geral
+            if (nome.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
                 adminSection.classList.remove('hidden');
+                tituloMural.textContent = "🏆 Mural Geral da Escola (Visão da Professora)";
             } else {
                 adminSection.classList.add('hidden');
+                tituloMural.textContent = `🏆 Mural da sua Turma (${turma})`;
             }
 
             carregarPostagens();
         }
 
-        // Enviar Postagem com o Desafio da Semana Escolhido
         document.getElementById('form-post').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -178,10 +180,9 @@
                 });
                 
                 document.getElementById('mensagem-input').value = '';
-                // Limpa a seleção do rádio
                 desafioSelecionado.checked = false;
                 
-                alert("Desafio publicado com sucesso! (+10 pontos para sua sala)");
+                alert("Desafio publicado com sucesso! (+5 pontos para sua sala)");
             } catch (error) {
                 alert("Erro ao publicar: " + error.message);
             }
@@ -195,27 +196,33 @@
                 let participantesUnicos = new Map();
                 let pontuacaoSalas = {};
 
+                const ehIsabela = (alunoLogado && alunoLogado.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
                 snapshot.forEach((doc) => {
                     const post = doc.data();
                     
                     if (post.autor && post.turma) {
                         participantesUnicos.set(post.autor, post.turma);
-                        pontuacaoSalas[post.turma] = (pontuacaoSalas[post.turma] || 0) + 10;
+                        // Cada postagem agora vale 5 pontos
+                        pontuacaoSalas[post.turma] = (pontuacaoSalas[post.turma] || 0) + 5;
                     }
 
-                    const postEl = document.createElement('div');
-                    postEl.className = 'post';
-                    postEl.innerHTML = `
-                        <div class="post-header">
-                            <span class="post-author">${escapeHTML(post.autor)} (${escapeHTML(post.turma)})</span>
-                            <span class="post-tag">${escapeHTML(post.desafio)}</span>
-                        </div>
-                        <div class="post-content">${escapeHTML(post.mensagem)}</div>
-                    `;
-                    postsContainer.appendChild(postEl);
+                    // Se for a Isabela, mostra TUDO. Se for aluno comum, mostra APENAS os posts da sua sala
+                    if (ehIsabela || post.turma === alunoTurma) {
+                        const postEl = document.createElement('div');
+                        postEl.className = 'post';
+                        postEl.innerHTML = `
+                            <div class="post-header">
+                                <span class="post-author">${escapeHTML(post.autor)} (${escapeHTML(post.turma)})</span>
+                                <span class="post-tag">${escapeHTML(post.desafio)}</span>
+                            </div>
+                            <div class="post-content">${escapeHTML(post.mensagem)}</div>
+                        `;
+                        postsContainer.appendChild(postEl);
+                    }
                 });
 
-                if (alunoLogado && alunoLogado.toLowerCase() === ADMIN_NOME_OU_EMAIL.toLowerCase()) {
+                if (ehIsabela) {
                     atualizarPainelAdmin(participantesUnicos, pontuacaoSalas);
                 }
             });
@@ -247,7 +254,7 @@
 <body>
 
     <header>
-        <h1>🌱 Desafio Verde: Mural da Escola</h1>
+        <h1>🌱 Desafio Verde: Mural Interativo</h1>
     </header>
 
     <div class="container">
@@ -255,9 +262,9 @@
         <!-- Tela de Identificação Inicial -->
         <div id="identification-section" class="card">
             <h3>👋 Olá! Identifique-se para participar</h3>
-            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #555;">Digite seu nome e selecione sua turma para acessar o mural.</p>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #555;">Digite seu nome (ou e-mail) e selecione sua turma para acessar o mural.</p>
             
-            <input type="text" id="input-nome" placeholder="Seu Nome Completo (ou e-mail da escola)" required>
+            <input type="text" id="input-nome" placeholder="Seu Nome Completo / E-mail da escola" required>
             
             <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Sua Série:</label>
             <div class="selector-group">
@@ -288,7 +295,7 @@
                 
                 <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ccc;">
                 
-                <h4>🏆 Ranking das Salas (Pontuação)</h4>
+                <h4>🏆 Ranking das Salas (5 pts por postagem)</h4>
                 <table>
                     <thead><tr><th>Série</th><th>Pontuação Total</th></tr></thead>
                     <tbody id="admin-ranking"></tbody>
@@ -305,7 +312,7 @@
                 <h3>📢 Registrar Ação Verde</h3>
                 <form id="form-post">
                     
-                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Selecione o Desafio Realizado:</label>
+                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Selecione o Desafio Realizado (+5 Pontos):</label>
                     <div class="selector-group" style="flex-direction: column; gap: 0.4rem;">
                         <div>
                             <input type="radio" id="sem1" name="desafio" value="Semana 1: Guardião da Água">
@@ -336,7 +343,7 @@
                 </form>
             </div>
 
-            <h2>🏆 Mural da Escola</h2>
+            <h2 id="titulo-mural">🏆 Mural da Escola</h2>
             <div id="posts-container" style="margin-top: 1rem;"></div>
         </div>
 
