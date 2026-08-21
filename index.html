@@ -55,6 +55,7 @@
         }
 
         .btn-logout { width: auto; margin: 0; padding: 0.4rem 1rem; background-color: #d32f2f; color: white; }
+        .btn-logout:hover { background-color: #b71c1c; }
 
         /* Feed de Postagens */
         .post {
@@ -74,9 +75,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DO SEU FIREBASE (Substitua pelos seus dados do console do Firebase)
+        // ⚠️ LEMBRE-SE: Substitua com as credenciais reais do seu painel do Firebase
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
             authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -91,41 +92,78 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Variáveis de Estado
+        // Variável de Estado Global
         let usuarioAtual = null;
+        let unsubscribePosts = null; // Para controlar escuta do banco e evitar vazamento de memória
 
         // Elementos DOM
         const authSection = document.getElementById('auth-section');
         const appSection = document.getElementById('app-section');
-        const userInfo = document.getElementById('user-info');
         const userEmailSpan = document.getElementById('user-email');
         const postsContainer = document.getElementById('posts-container');
 
-        // Autenticação: Cadastro / Login
+        // Autenticação: Login
         document.getElementById('btn-login').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert("Por favor, preencha o e-mail e a senha.");
+                return;
+            }
+
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                alert("Erro ao entrar: " + error.message);
+                console.error("Erro no login:", error);
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    alert("E-mail ou senha incorretos.");
+                } else if (error.code === 'auth/invalid-email') {
+                    alert("O formato do e-mail digitado é inválido.");
+                } else {
+                    alert("Erro ao entrar: " + error.message);
+                }
             }
         });
 
+        // Autenticação: Registro de Nova Conta
         document.getElementById('btn-register').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert("Por favor, preencha o e-mail e a senha para criar a conta.");
+                return;
+            }
+
+            if (password.length < 6) {
+                alert("A senha precisa ter pelo menos 6 caracteres.");
+                return;
+            }
+
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
-                alert("Conta criada com sucesso!");
+                alert("Conta criada e conectada com sucesso!");
             } catch (error) {
-                alert("Erro ao cadastrar: " + error.message);
+                console.error("Erro no cadastro:", error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert("Este e-mail já está cadastrado. Tente fazer o login.");
+                } else if (error.code === 'auth/weak-password') {
+                    alert("A senha é muito fraca.");
+                } else {
+                    alert("Erro ao cadastrar: " + error.message);
+                }
             }
         });
 
-        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+        // Autenticação: Logout
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth).catch((error) => {
+                console.error("Erro ao sair:", error);
+            });
+        });
 
-        // Monitorar Estado do Usuário
+        // Monitorar Estado do Usuário em Tempo Real
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 usuarioAtual = user;
@@ -137,15 +175,28 @@
                 usuarioAtual = null;
                 authSection.classList.remove('hidden');
                 appSection.classList.add('hidden');
+                postsContainer.innerHTML = '';
+                
+                // Desconecta o listener do Firestore se o usuário sair
+                if (unsubscribePosts) {
+                    unsubscribePosts();
+                    unsubscribePosts = null;
+                }
             }
         });
 
         // Enviar Postagem
         document.getElementById('form-post').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            if (!usuarioAtual) {
+                alert("Você precisa estar logado para publicar.");
+                return;
+            }
+
             const turma = document.getElementById('turma-select').value;
-            const desafio = document.getElementById('desafio-input').value;
-            const mensagem = document.getElementById('mensagem-input').value;
+            const desafio = document.getElementById('desafio-input').value.trim();
+            const mensagem = document.getElementById('mensagem-input').value.trim();
 
             try {
                 await addDoc(collection(db, "postagens"), {
@@ -153,35 +204,53 @@
                     turma: turma,
                     desafio: desafio,
                     mensagem: mensagem,
-                    data: new Date()
+                    data: serverTimestamp() // Usa o timestamp oficial do servidor do Firestore
                 });
-                document.getElementById('mensagem-input').value = '';
-                document.getElementById('desafio-input').value = '';
-                alert("Desafio publicado!");
+                
+                // Limpa o formulário de postagem
+                document.getElementById('form-post').reset();
+                alert("Desafio publicado com sucesso!");
             } catch (error) {
+                console.error("Erro ao publicar:", error);
                 alert("Erro ao publicar: " + error.message);
             }
         });
 
-        // Carregar Postagens em Tempo Real
+        // Carregar Postagens em Tempo Real do Firestore
         function carregarPostagens() {
             const q = query(collection(db, "postagens"), orderBy("data", "desc"));
-            onSnapshot(q, (snapshot) => {
+            
+            unsubscribePosts = onSnapshot(q, (snapshot) => {
                 postsContainer.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    postsContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum desafio publicado ainda. Seja o primeiro!</p>';
+                    return;
+                }
+
                 snapshot.forEach((doc) => {
                     const post = doc.data();
                     const postEl = document.createElement('div');
                     postEl.className = 'post';
                     postEl.innerHTML = `
                         <div class="post-header">
-                            <span class="post-author">${post.autor} (${post.turma})</span>
-                            <span class="post-tag">${post.desafio}</span>
+                            <span class="post-author">${escapeHTML(post.autor)} (${escapeHTML(post.turma || 'Turma não informada')})</span>
+                            <span class="post-tag">${escapeHTML(post.desafio || 'Desafio')}</span>
                         </div>
-                        <div class="post-content">${post.mensagem}</div>
+                        <div class="post-content">${escapeHTML(post.mensagem || '')}</div>
                     `;
                     postsContainer.appendChild(postEl);
                 });
+            }, (error) => {
+                console.error("Erro ao carregar postagens:", error);
             });
+        }
+
+        // Função utilitária básica de segurança para evitar injeção de HTML no feed
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
         }
     </script>
 </head>
@@ -198,7 +267,7 @@
         <div id="auth-section" class="card">
             <h3>🔑 Entrar / Criar Conta</h3>
             <input type="email" id="email" placeholder="Seu e-mail (ex: aluno@gmail.com)" required>
-            <input type="password" id="password" placeholder="Sua senha" required>
+            <input type="password" id="password" placeholder="Sua senha (mínimo 6 caracteres)" required>
             <button id="btn-login">Entrar</button>
             <button id="btn-register" style="background-color: var(--verde-claro); color: white;">Criar Nova Conta</button>
         </div>
@@ -215,7 +284,7 @@
             <div class="card">
                 <h3>📢 Registrar Desafio Concluído</h3>
                 <form id="form-post">
-                    <label>Sua Turma:</label>
+                    <label for="turma-select">Sua Turma:</label>
                     <select id="turma-select" required>
                         <option value="6º Ano EF">6º Ano EF</option>
                         <option value="7º Ano EF">7º Ano EF</option>
