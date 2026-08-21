@@ -3,79 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guardiões da Terra - Jogo Ecológico</title>
+    <title>Guardiões da Natureza: A Jornada de Eco & Flora</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
-        body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        body { background: #090d16; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
 
-        #game-container { position: relative; width: 800px; height: 600px; background: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
-        canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+        #game-container { position: relative; width: 850px; height: 500px; background: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 30px rgba(0,0,0,0.7); border: 3px solid #334155; }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* UI Overlays */
+        /* HUD Overlay */
         .hud { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
-        .hud-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
-        .hud-title { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; letter-spacing: 0.05em; }
-        .hud-value { font-size: 20px; font-weight: bold; color: #38bdf8; }
+        .hud-group { display: flex; gap: 12px; }
+        .hud-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
+        .hud-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; }
+        .hud-val { font-size: 18px; font-weight: bold; color: #4ade80; }
 
-        .modal { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 32px; z-index: 20; transition: opacity 0.3s ease; }
-        .modal.hidden { opacity: 0; pointer-events: none; }
-        .modal h1 { font-size: 32px; color: #4ade80; margin-bottom: 12px; }
-        .modal h2 { font-size: 24px; color: #38bdf8; margin-bottom: 8px; }
-        .modal p { color: #cbd5e1; max-width: 480px; margin-bottom: 24px; font-size: 15px; line-height: 1.5; }
+        /* Modais */
+        .modal { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(10px); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 24px; z-index: 20; }
+        .modal.hidden { display: none; }
+        .modal h1 { font-size: 32px; color: #4ade80; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(74,222,128,0.3); }
+        .modal p { color: #cbd5e1; max-width: 500px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
+
+        /* Seleção de Personagens */
+        .char-select { display: flex; gap: 20px; margin-bottom: 24px; }
+        .char-card { background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 16px; width: 160px; cursor: pointer; transition: all 0.2s; }
+        .char-card:hover, .char-card.selected { border-color: #4ade80; background: #0f172a; transform: translateY(-4px); box-shadow: 0 8px 20px rgba(74,222,128,0.2); }
+        .char-avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+        .eco-bg { background: #16a34a; }
+        .flora-bg { background: #ec4899; }
 
         .btn { background: #22c55e; color: #052e16; border: none; padding: 12px 32px; font-size: 16px; font-weight: bold; border-radius: 9999px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(34,197,94,0.4); }
         .btn:hover { background: #4ade80; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34,197,94,0.6); }
 
-        .bins-overlay { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 10; }
-        .bin-btn { padding: 10px 16px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); font-weight: bold; font-size: 13px; color: white; cursor: pointer; transition: transform 0.1s; }
-        .bin-btn:active { transform: scale(0.95); }
-        .bin-plastic { background: #ef4444; }
-        .bin-paper { background: #3b82f6; }
-        .bin-glass { background: #22c55e; }
-        .bin-metal { background: #eab308; color: #422006; }
+        .controls-hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #64748b; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <!-- HUD Superior -->
+        <!-- HUD -->
         <div class="hud">
-            <div class="hud-card">
-                <span class="hud-title">Nível</span>
-                <span id="hud-level" class="hud-value">1</span>
+            <div class="hud-group">
+                <div class="hud-card">
+                    <span class="hud-label">Heroi:</span>
+                    <span id="hud-char" class="hud-val">Eco</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Vida:</span>
+                    <span id="hud-hp" class="hud-val">❤️❤️❤️</span>
+                </div>
             </div>
-            <div class="hud-card">
-                <span class="hud-title">Objetivo</span>
-                <span id="hud-target" class="hud-value">0 / 50</span>
-            </div>
-            <div class="hud-card">
-                <span class="hud-title">Pontos Eco</span>
-                <span id="hud-score" class="hud-value">0</span>
+            <div class="hud-group">
+                <div class="hud-card">
+                    <span class="hud-label">Sementes:</span>
+                    <span id="hud-seeds" class="hud-val">0 / 5</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Pontos:</span>
+                    <span id="hud-score" class="hud-val">0</span>
+                </div>
             </div>
         </div>
 
-        <!-- Botoes Lixeiras Nivel 1 -->
-        <div id="bins-ui" class="bins-overlay hidden">
-            <button class="bin-btn bin-plastic" onclick="game.selectBin('plastic')">🔴 Plástico</button>
-            <button class="bin-btn bin-paper" onclick="game.selectBin('paper')">🔵 Papel</button>
-            <button class="bin-btn bin-glass" onclick="game.selectBin('glass')">🟢 Vidro</button>
-            <button class="bin-btn bin-metal" onclick="game.selectBin('metal')">🟡 Metal</button>
-        </div>
+        <canvas id="canvas" width="850" height="500"></canvas>
+        <div class="controls-hint">Mover: <b>A D / Setas</b> | Pular: <b>W / Espaço</b> | Atacar Purificação: <b>J / Z</b></div>
 
-        <!-- Canvas -->
-        <canvas id="canvas" width="800" height="600"></canvas>
-
-        <!-- Modais de Transição -->
+        <!-- Tela Inicial -->
         <div id="start-modal" class="modal">
-            <h1>🌍 Guardiões da Terra</h1>
-            <p>Ajude a salvar o planeta completando 3 desafios ecológicos: Reciclagem Rápida, Energia Eólica e Reflorestamento Dinâmico!</p>
-            <button class="btn" onclick="game.startLevel(1)">Iniciar Desafio</button>
+            <h1>🌿 Guardiões da Natureza</h1>
+            <p>A Floresta das Sombras foi contaminada por Fumaça Monstruosa e Poluição! Escolha seu herói, colete as Sementes da Vida e derrote as sombras para salvar o bioma.</p>
+            
+            <div class="char-select">
+                <div class="char-card selected" id="card-eco" onclick="selectChar('Eco')">
+                    <div class="char-avatar eco-bg">🍃</div>
+                    <h3>Eco</h3>
+                    <p style="font-size: 11px; color:#94a3b8; margin-top:4px;">Veloz e Ágil<br>Ataque Folha</p>
+                </div>
+                <div class="char-card" id="card-flora" onclick="selectChar('Flora')">
+                    <div class="char-avatar flora-bg">🌸</div>
+                    <h3>Flora</h3>
+                    <p style="font-size: 11px; color:#94a3b8; margin-top:4px;">Pulo Mais Alto<br>Ataque Floral</p>
+                </div>
+            </div>
+
+            <button class="btn" onclick="startGame()">Entrar na Floresta</button>
         </div>
 
-        <div id="level-modal" class="modal hidden">
-            <h2 id="modal-title">Nível Concluído!</h2>
-            <p id="modal-desc">Você fez um ótimo trabalho para a sustentabilidade!</p>
-            <button id="modal-btn" class="btn" onclick="game.nextLevel()">Próximo Nível</button>
+        <!-- Modal Fim de Jogo -->
+        <div id="end-modal" class="modal hidden">
+            <h1 id="end-title">Vitória Verde!</h1>
+            <p id="end-desc">Você purificou a floresta com sucesso!</p>
+            <button class="btn" onclick="restartGame()">Jogar Novamente</button>
         </div>
     </div>
 
@@ -83,325 +101,292 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        class EcoGame {
-            constructor() {
-                this.level = 1;
-                this.score = 0;
-                this.target = 0;
-                this.progress = 0;
-                this.active = false;
-                
-                // Entidades do jogo
-                this.items = [];
-                this.particles = [];
-                this.selectedTrash = null;
-                this.turbines = [];
-                this.windAngle = 0;
-                this.co2Level = 0;
+        let selectedHero = 'Eco';
+        const keys = {};
 
-                this.bindEvents();
-                this.loop();
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        function selectChar(hero) {
+            selectedHero = hero;
+            document.getElementById('card-eco').classList.toggle('selected', hero === 'Eco');
+            document.getElementById('card-flora').classList.toggle('selected', hero === 'Flora');
+        }
+
+        class Player {
+            constructor(hero) {
+                this.hero = hero;
+                this.x = 80;
+                this.y = 300;
+                this.w = 36;
+                this.h = 48;
+                this.vx = 0;
+                this.vy = 0;
+                this.speed = hero === 'Eco' ? 5.5 : 4.5;
+                this.jumpPower = hero === 'Flora' ? -13.5 : -12;
+                this.grounded = false;
+                this.hp = 3;
+                this.facing = 'right';
+                this.color = hero === 'Eco' ? '#22c55e' : '#ec4899';
+                this.attackCooldown = 0;
             }
 
-            startLevel(lvl) {
-                this.level = lvl;
-                this.progress = 0;
-                this.items = [];
-                this.particles = [];
-                this.selectedTrash = null;
-                document.getElementById('start-modal').classList.add('hidden');
-                document.getElementById('level-modal').classList.add('hidden');
-
-                const binsUI = document.getElementById('bins-ui');
-                binsUI.classList.add('hidden');
-
-                if (lvl === 1) {
-                    this.target = 50;
-                    binsUI.classList.remove('hidden');
-                } else if (lvl === 2) {
-                    this.target = 100;
-                    this.windAngle = Math.PI / 4;
-                    this.turbines = [
-                        { x: 200, y: 350, angle: 0 },
-                        { x: 400, y: 300, angle: Math.PI / 2 },
-                        { x: 600, y: 380, angle: Math.PI }
-                    ];
-                } else if (lvl === 3) {
-                    this.target = 15;
-                    this.co2Level = 20;
+            update(platforms) {
+                // Input Movimento
+                if (keys['KeyA'] || keys['ArrowLeft']) {
+                    this.vx = -this.speed;
+                    this.facing = 'left';
+                } else if (keys['KeyD'] || keys['ArrowRight']) {
+                    this.vx = this.speed;
+                    this.facing = 'right';
+                } else {
+                    this.vx *= 0.7;
                 }
 
+                // Pulo
+                if ((keys['KeyW'] || keys['Space'] || keys['ArrowUp']) && this.grounded) {
+                    this.vy = this.jumpPower;
+                    this.grounded = false;
+                }
+
+                // Ataque
+                if ((keys['KeyJ'] || keys['KeyZ']) && this.attackCooldown <= 0) {
+                    game.spawnProjectile(this.x + this.w/2, this.y + this.h/2, this.facing, this.hero);
+                    this.attackCooldown = 20;
+                }
+                if (this.attackCooldown > 0) this.attackCooldown--;
+
+                // Gravidade
+                this.vy += 0.6;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Colisão Plataformas
+                this.grounded = false;
+                platforms.forEach(p => {
+                    if (this.x < p.x + p.w && this.x + this.w > p.x &&
+                        this.y + this.h > p.y && this.y + this.h - this.vy <= p.y + 10) {
+                        this.y = p.y - this.h;
+                        this.vy = 0;
+                        this.grounded = true;
+                    }
+                });
+
+                // Limites da tela
+                if (this.x < 0) this.x = 0;
+                if (this.x > canvas.width - this.w) this.x = canvas.width - this.w;
+                if (this.y > canvas.height) this.takeDamage(1);
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+                this.y = 200;
+                this.x = 80;
+                this.vy = 0;
+                game.updateHUD();
+                if (this.hp <= 0) game.gameOver(false);
+            }
+
+            draw() {
+                ctx.save();
+                // Corpo do Personagem (Estilo Cartoon)
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.roundRect(this.x, this.y, this.w, this.h, [10]);
+                ctx.fill();
+
+                // Cabeça / Detalhe
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(this.x + (this.facing === 'right' ? 20 : 4), this.y + 10, 10, 8); // Olhos/Viseira
+
+                // Cabelo / Folha no topo
+                ctx.fillStyle = this.hero === 'Eco' ? '#15803d' : '#f43f5e';
+                ctx.beginPath();
+                ctx.arc(this.x + this.w/2, this.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.active = false;
+                this.score = 0;
+                this.seedsCollected = 0;
+                this.targetSeeds = 5;
+                this.projectiles = [];
+                this.enemies = [];
+                this.seeds = [];
+                this.platforms = [
+                    { x: 0, y: 440, w: 850, h: 60 },
+                    { x: 180, y: 330, w: 140, h: 18 },
+                    { x: 380, y: 250, w: 160, h: 18 },
+                    { x: 600, y: 340, w: 180, h: 18 },
+                    { x: 80, y: 180, w: 120, h: 18 }
+                ];
+            }
+
+            init() {
+                this.player = new Player(selectedHero);
+                this.score = 0;
+                this.seedsCollected = 0;
+                this.projectiles = [];
+                
+                // Inimigos Poluição
+                this.enemies = [
+                    { x: 220, y: 290, w: 32, h: 32, vx: 1.5, minX: 180, maxX: 280 },
+                    { x: 420, y: 210, w: 32, h: 32, vx: 2, minX: 380, maxX: 500 },
+                    { x: 640, y: 300, w: 32, h: 32, vx: 1.2, minX: 600, maxX: 740 }
+                ];
+
+                // Sementes Coletáveis
+                this.seeds = [
+                    { x: 230, y: 290, collected: false },
+                    { x: 450, y: 210, collected: false },
+                    { x: 680, y: 300, collected: false },
+                    { x: 130, y: 140, collected: false },
+                    { x: 750, y: 400, collected: false }
+                ];
+
+                document.getElementById('hud-char').innerText = selectedHero;
                 this.updateHUD();
                 this.active = true;
             }
 
-            updateHUD() {
-                document.getElementById('hud-level').innerText = this.level;
-                document.getElementById('hud-score').innerText = this.score;
-                document.getElementById('hud-target').innerText = `${Math.floor(this.progress)} / ${this.target}`;
-            }
-
-            bindEvents() {
-                canvas.addEventListener('click', (e) => {
-                    if (!this.active) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    if (this.level === 1) {
-                        // Selecionar lixo caindo
-                        for (let item of this.items) {
-                            const dist = Math.hypot(item.x - x, item.y - y);
-                            if (dist < 25) {
-                                this.selectedTrash = item;
-                                this.addParticles(x, y, '#38bdf8', 8);
-                                break;
-                            }
-                        }
-                    } else if (this.level === 2) {
-                        // Girar Turbina
-                        for (let t of this.turbines) {
-                            const dist = Math.hypot(t.x - x, t.y - y);
-                            if (dist < 40) {
-                                t.angle += Math.PI / 4;
-                                if (t.angle >= Math.PI * 2) t.angle = 0;
-                                this.addParticles(t.x, t.y, '#38bdf8', 6);
-                            }
-                        }
-                    } else if (this.level === 3) {
-                        // Plantar Árvore
-                        if (y > 250) {
-                            this.items.push({ x, y, scale: 0 });
-                            this.progress++;
-                            this.score += 10;
-                            this.co2Level = Math.max(0, this.co2Level - 5);
-                            this.addParticles(x, y, '#22c55e', 12);
-                            this.updateHUD();
-
-                            if (this.progress >= this.target) this.completeLevel();
-                        }
-                    }
+            spawnProjectile(x, y, dir, hero) {
+                this.projectiles.push({
+                    x, y,
+                    vx: dir === 'right' ? 8 : -8,
+                    color: hero === 'Eco' ? '#4ade80' : '#f472b6',
+                    life: 40
                 });
             }
 
-            selectBin(type) {
-                if (!this.selectedTrash) return;
-                if (this.selectedTrash.type === type) {
-                    this.score += 10;
-                    this.progress += 10;
-                    this.addParticles(this.selectedTrash.x, this.selectedTrash.y, '#22c55e', 15);
-                } else {
-                    this.score = Math.max(0, this.score - 5);
-                    this.addParticles(this.selectedTrash.x, this.selectedTrash.y, '#ef4444', 15);
-                }
-                this.items = this.items.filter(i => i !== this.selectedTrash);
-                this.selectedTrash = null;
-                this.updateHUD();
-
-                if (this.progress >= this.target) this.completeLevel();
+            updateHUD() {
+                let hearts = '';
+                for(let i=0; i<this.player.hp; i++) hearts += '❤️';
+                document.getElementById('hud-hp').innerText = hearts || '💀';
+                document.getElementById('hud-seeds').innerText = `${this.seedsCollected} / ${this.targetSeeds}`;
+                document.getElementById('hud-score').innerText = this.score;
             }
 
-            addParticles(x, y, color, count) {
-                for (let i = 0; i < count; i++) {
-                    this.particles.push({
-                        x, y,
-                        vx: (Math.random() - 0.5) * 6,
-                        vy: (Math.random() - 0.5) * 6,
-                        radius: Math.random() * 4 + 2,
-                        color, alpha: 1
-                    });
-                }
-            }
-
-            completeLevel() {
+            gameOver(win) {
                 this.active = false;
-                document.getElementById('bins-ui').classList.add('hidden');
-                const modal = document.getElementById('level-modal');
-                const title = document.getElementById('modal-title');
-                const desc = document.getElementById('modal-desc');
-                const btn = document.getElementById('modal-btn');
-
-                if (this.level < 3) {
-                    title.innerText = `Nível ${this.level} Concluído!`;
-                    desc.innerText = "Excelente trabalho ecológico! Vamos para o próximo desafio.";
-                    btn.innerText = "Iniciar Nível " + (this.level + 1);
-                    btn.onclick = () => this.startLevel(this.level + 1);
-                } else {
-                    title.innerText = "🏆 Planeta Salvo!";
-                    desc.innerText = `Parabéns! Você completou todos os desafios com ${this.score} Pontos Eco.`;
-                    btn.innerText = "Jogar Novamente";
-                    btn.onclick = () => this.startLevel(1);
-                }
-                modal.classList.remove('hidden');
-            }
-
-            gameOver() {
-                this.active = false;
-                document.getElementById('bins-ui').classList.add('hidden');
-                const modal = document.getElementById('level-modal');
-                document.getElementById('modal-title').innerText = "⚠️ Alerta Ambiental!";
-                document.getElementById('modal-desc').innerText = "O nível de poluição ficou alto demais. Tente novamente!";
-                const btn = document.getElementById('modal-btn');
-                btn.innerText = "Tentar Novamente";
-                btn.onclick = () => this.startLevel(this.level);
+                const modal = document.getElementById('end-modal');
+                document.getElementById('end-title').innerText = win ? "🌿 Floresta Salva!" : "💀 Poluição Venceu!";
+                document.getElementById('end-desc').innerText = win 
+                    ? `Fantástico! Você e ${selectedHero} limparam a floresta e acumularam ${this.score} pontos!`
+                    : "A poluição tomou conta. Tente novamente para libertar os espíritos da natureza.";
                 modal.classList.remove('hidden');
             }
 
             update() {
                 if (!this.active) return;
 
-                // Atualizar Partículas
-                this.particles.forEach(p => {
-                    p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
+                this.player.update(this.platforms);
+
+                // Projetéis
+                this.projectiles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.life--;
+                    
+                    // Colisão Projétil com Inimigo
+                    this.enemies.forEach((e, eIdx) => {
+                        if (p.x > e.x && p.x < e.x + e.w && p.y > e.y && p.y < e.y + e.h) {
+                            this.enemies.splice(eIdx, 1);
+                            this.projectiles.splice(index, 1);
+                            this.score += 50;
+                            this.updateHUD();
+                        }
+                    });
                 });
-                this.particles = this.particles.filter(p => p.alpha > 0);
+                this.projectiles = this.projectiles.filter(p => p.life > 0);
 
-                // Lógica Nível 1: Lixo caindo
-                if (this.level === 1) {
-                    if (Math.random() < 0.03) {
-                        const types = ['plastic', 'paper', 'glass', 'metal'];
-                        this.items.push({
-                            x: Math.random() * 700 + 50,
-                            y: -20,
-                            type: types[Math.floor(Math.random() * types.length)],
-                            speed: Math.random() * 1.5 + 1
-                        });
+                // Inimigos
+                this.enemies.forEach(e => {
+                    e.x += e.vx;
+                    if (e.x < e.minX || e.x > e.maxX) e.vx *= -1;
+
+                    // Colisão Jogador vs Inimigo
+                    if (this.player.x < e.x + e.w && this.player.x + this.player.w > e.x &&
+                        this.player.y < e.y + e.h && this.player.y + this.player.h > e.y) {
+                        this.player.takeDamage(1);
                     }
-                    this.items.forEach(item => item.y += item.speed);
-                    this.items = this.items.filter(item => item.y < 620);
-                }
+                });
 
-                // Lógica Nível 2: Energia Eólica
-                else if (this.level === 2) {
-                    let aligned = 0;
-                    this.turbines.forEach(t => {
-                        let diff = Math.abs(t.angle - this.windAngle);
-                        if (diff < 0.2) aligned++;
-                    });
-                    if (aligned > 0) {
-                        this.progress = Math.min(this.target, this.progress + aligned * 0.08);
-                        this.score += aligned * 0.02;
+                // Coletar Sementes
+                this.seeds.forEach(s => {
+                    if (!s.collected && Math.hypot(this.player.x - s.x, this.player.y - s.y) < 30) {
+                        s.collected = true;
+                        this.seedsCollected++;
+                        this.score += 100;
                         this.updateHUD();
+
+                        if (this.seedsCollected >= this.targetSeeds) {
+                            this.gameOver(true);
+                        }
                     }
-                    if (this.progress >= this.target) this.completeLevel();
-                }
-
-                // Lógica Nível 3: CO2 e Árvores
-                else if (this.level === 3) {
-                    this.co2Level += 0.04;
-                    if (this.co2Level >= 100) this.gameOver();
-
-                    this.items.forEach(tree => {
-                        if (tree.scale < 1) tree.scale += 0.02;
-                    });
-                }
+                });
             }
 
             draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Fundo Florestal
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Fundo dinâmico por Nível
-                if (this.level === 1) {
-                    ctx.fillStyle = '#0f172a';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                } else if (this.level === 2) {
-                    ctx.fillStyle = '#0284c7';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    // Vento
-                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                    ctx.lineWidth = 3;
+                // Árvores de Fundo
+                ctx.fillStyle = '#1e293b';
+                for (let i = 0; i < 6; i++) {
                     ctx.beginPath();
-                    for (let i = 0; i < 5; i++) {
-                        let y = 100 + i * 100;
-                        ctx.moveTo(0, y);
-                        ctx.lineTo(800, y + Math.tan(this.windAngle) * 200);
-                    }
-                    ctx.stroke();
-                } else if (this.level === 3) {
-                    // Céu e Solo poluídos vs limpos
-                    let pollRatio = this.co2Level / 100;
-                    ctx.fillStyle = `rgb(${70 + pollRatio * 50}, ${130 - pollRatio * 50}, ${180 - pollRatio * 100})`;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    ctx.fillStyle = '#15803d';
-                    ctx.fillRect(0, 250, canvas.width, 350);
-
-                    // Barra CO2
-                    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                    ctx.fillRect(200, 20, 400, 16);
-                    ctx.fillStyle = pollRatio > 0.7 ? '#ef4444' : '#eab308';
-                    ctx.fillRect(200, 20, 400 * pollRatio, 16);
-                }
-
-                // Desenhar Lixo (Nível 1)
-                if (this.level === 1) {
-                    this.items.forEach(item => {
-                        ctx.beginPath();
-                        ctx.arc(item.x, item.y, 16, 0, Math.PI * 2);
-                        if (item.type === 'plastic') ctx.fillStyle = '#ef4444';
-                        if (item.type === 'paper') ctx.fillStyle = '#3b82f6';
-                        if (item.type === 'glass') ctx.fillStyle = '#22c55e';
-                        if (item.type === 'metal') ctx.fillStyle = '#eab308';
-                        ctx.fill();
-
-                        if (this.selectedTrash === item) {
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 3;
-                            ctx.stroke();
-                        }
-                    });
-                }
-
-                // Desenhar Turbinas (Nível 2)
-                if (this.level === 2) {
-                    this.turbines.forEach(t => {
-                        ctx.fillStyle = '#f8fafc';
-                        ctx.fillRect(t.x - 4, t.y, 8, 120);
-
-                        ctx.save();
-                        ctx.translate(t.x, t.y);
-                        ctx.rotate(t.angle);
-                        ctx.strokeStyle = '#f8fafc';
-                        ctx.lineWidth = 6;
-                        for (let i = 0; i < 3; i++) {
-                            ctx.beginPath();
-                            ctx.moveTo(0, 0);
-                            ctx.lineTo(0, -45);
-                            ctx.stroke();
-                            ctx.rotate((Math.PI * 2) / 3);
-                        }
-                        ctx.restore();
-                    });
-                }
-
-                // Desenhar Árvores (Nível 3)
-                if (this.level === 3) {
-                    this.items.forEach(tree => {
-                        ctx.save();
-                        ctx.translate(tree.x, tree.y);
-                        ctx.scale(tree.scale, tree.scale);
-
-                        ctx.fillStyle = '#78350f';
-                        ctx.fillRect(-6, -10, 12, 20);
-
-                        ctx.beginPath();
-                        ctx.arc(0, -25, 20, 0, Math.PI * 2);
-                        ctx.fillStyle = '#22c55e';
-                        ctx.fill();
-
-                        ctx.restore();
-                    });
-                }
-
-                // Desenhar Partículas
-                this.particles.forEach(p => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.globalAlpha = p.alpha;
+                    ctx.arc(80 + i * 150, 440, 80, Math.PI, 0);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
+                }
+
+                // Plataformas
+                this.platforms.forEach(p => {
+                    ctx.fillStyle = '#334155';
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.fillStyle = '#22c55e'; // Musgo por cima
+                    ctx.fillRect(p.x, p.y, p.w, 4);
                 });
+
+                // Sementes Brilhantes
+                this.seeds.forEach(s => {
+                    if (!s.collected) {
+                        ctx.fillStyle = '#facc15';
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowColor = '#facc15';
+                        ctx.shadowBlur = 10;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                });
+
+                // Inimigos (Monstros de Fumaça)
+                this.enemies.forEach(e => {
+                    ctx.fillStyle = '#475569';
+                    ctx.beginPath();
+                    ctx.roundRect(e.x, e.y, e.w, e.h, [8]);
+                    ctx.fill();
+                    // Olhos vermelhos
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(e.x + 6, e.y + 8, 6, 6);
+                    ctx.fillRect(e.x + 20, e.y + 8, 6, 6);
+                });
+
+                // Projetéis de Magia
+                this.projectiles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Jogador
+                this.player.draw();
             }
 
             loop() {
@@ -411,7 +396,18 @@
             }
         }
 
-        const game = new EcoGame();
+        const game = new Game();
+        game.loop();
+
+        function startGame() {
+            document.getElementById('start-modal').classList.add('hidden');
+            game.init();
+        }
+
+        function restartGame() {
+            document.getElementById('end-modal').classList.add('hidden');
+            game.init();
+        }
     </script>
 </body>
 </html>
