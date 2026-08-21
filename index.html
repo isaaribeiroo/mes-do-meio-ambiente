@@ -26,26 +26,39 @@
 
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
 
-        /* Cartões e Formulários */
+        /* Cartões */
         .card {
             background: white; border-radius: 10px; padding: 1.5rem;
             margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             border-left: 5px solid var(--verde-principal);
         }
-
+        
+        .card-admin { border-left-color: #d32f2f; background-color: #ffebee; }
         .card h3 { color: var(--verde-escuro); margin-bottom: 1rem; }
+        .card-admin h3 { color: #c62828; }
 
-        input, select, textarea, button {
+        input[type="email"], input[type="password"], input[type="text"], textarea {
             width: 100%; padding: 0.8rem; margin-top: 0.5rem; margin-bottom: 1rem;
             border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;
         }
 
-        button {
+        button.btn-acao {
+            width: 100%; padding: 0.8rem; margin-bottom: 1rem;
             background-color: var(--amarelo-principal); color: var(--verde-escuro);
-            font-weight: bold; border: none; cursor: pointer; transition: 0.2s;
+            font-weight: bold; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
+        button.btn-acao:hover { background-color: #f9a825; }
 
-        button:hover { background-color: #f9a825; }
+        /* Botões de Seleção de Turma */
+        .turma-selector { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .turma-selector input[type="radio"] { display: none; }
+        .turma-selector label {
+            padding: 0.5rem 1rem; background-color: #e0e0e0; border-radius: 20px;
+            cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.3s;
+        }
+        .turma-selector input[type="radio"]:checked + label {
+            background-color: var(--verde-principal); color: white;
+        }
 
         /* Status de Login */
         .user-info {
@@ -53,31 +66,30 @@
             background-color: var(--amarelo-suave); padding: 1rem; border-radius: 8px;
             margin-bottom: 1.5rem; border: 1px solid var(--amarelo-principal);
         }
-
-        .btn-logout { width: auto; margin: 0; padding: 0.4rem 1rem; background-color: #d32f2f; color: white; }
+        .btn-logout { padding: 0.4rem 1rem; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-logout:hover { background-color: #b71c1c; }
 
         /* Feed de Postagens */
-        .post {
-            background: white; border-radius: 8px; padding: 1rem;
-            margin-bottom: 1rem; border: 1px solid #e0e0e0;
-        }
-
+        .post { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e0e0e0; }
         .post-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
         .post-author { font-weight: bold; color: var(--verde-escuro); }
         .post-tag { background: var(--amarelo-principal); padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: bold; font-size: 0.8rem; }
         .post-content { margin-top: 0.8rem; font-size: 1rem; }
 
-        .hidden { display: none; }
+        /* Tabelas Painel Admin */
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+        th { background-color: #c62828; color: white; }
+
+        .hidden { display: none !important; }
     </style>
 
-    <!-- SDK do Firebase (Versão Modular via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️ LEMBRE-SE: Substitua com as credenciais reais do seu painel do Firebase
+        // COLOQUE SUAS CHAVES AQUI, SENÃO O LOGIN NÃO VAI FUNCIONAR!
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
             authDomain: "SEU_PROJETO.firebaseapp.com",
@@ -87,114 +99,78 @@
             appId: "SEU_APP_ID"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Variável de Estado Global
+        const ADMIN_EMAIL = "isabela.ribeiro23@escola.pr.gov.br"; // E-mail da Isabela (Admin)
         let usuarioAtual = null;
-        let unsubscribePosts = null; // Para controlar escuta do banco e evitar vazamento de memória
+        let unsubscribePosts = null;
 
-        // Elementos DOM
+        // Elementos
         const authSection = document.getElementById('auth-section');
         const appSection = document.getElementById('app-section');
+        const adminSection = document.getElementById('admin-section');
         const userEmailSpan = document.getElementById('user-email');
         const postsContainer = document.getElementById('posts-container');
 
-        // Autenticação: Login
+        // Login
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert("Por favor, preencha o e-mail e a senha.");
-                return;
-            }
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error("Erro no login:", error);
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    alert("E-mail ou senha incorretos.");
-                } else if (error.code === 'auth/invalid-email') {
-                    alert("O formato do e-mail digitado é inválido.");
-                } else {
-                    alert("Erro ao entrar: " + error.message);
-                }
-            }
+            try { await signInWithEmailAndPassword(auth, email, password); } 
+            catch (error) { alert("Erro ao entrar: Verifique e-mail/senha. (" + error.code + ")"); }
         });
 
-        // Autenticação: Registro de Nova Conta
+        // Cadastro
         document.getElementById('btn-register').addEventListener('click', async () => {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert("Por favor, preencha o e-mail e a senha para criar a conta.");
-                return;
-            }
-
-            if (password.length < 6) {
-                alert("A senha precisa ter pelo menos 6 caracteres.");
-                return;
-            }
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert("Conta criada e conectada com sucesso!");
-            } catch (error) {
-                console.error("Erro no cadastro:", error);
-                if (error.code === 'auth/email-already-in-use') {
-                    alert("Este e-mail já está cadastrado. Tente fazer o login.");
-                } else if (error.code === 'auth/weak-password') {
-                    alert("A senha é muito fraca.");
-                } else {
-                    alert("Erro ao cadastrar: " + error.message);
-                }
-            }
+            try { 
+                await createUserWithEmailAndPassword(auth, email, password); 
+                alert("Conta criada!");
+            } catch (error) { alert("Erro ao cadastrar: " + error.code); }
         });
 
-        // Autenticação: Logout
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            signOut(auth).catch((error) => {
-                console.error("Erro ao sair:", error);
-            });
-        });
+        // Logout
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-        // Monitorar Estado do Usuário em Tempo Real
+        // Monitorar Status
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 usuarioAtual = user;
                 userEmailSpan.textContent = user.email;
                 authSection.classList.add('hidden');
                 appSection.classList.remove('hidden');
+                
+                // Mostrar painel da Isabela se for ela
+                if (user.email === ADMIN_EMAIL) {
+                    adminSection.classList.remove('hidden');
+                } else {
+                    adminSection.classList.add('hidden');
+                }
+
                 carregarPostagens();
             } else {
                 usuarioAtual = null;
                 authSection.classList.remove('hidden');
                 appSection.classList.add('hidden');
-                postsContainer.innerHTML = '';
-                
-                // Desconecta o listener do Firestore se o usuário sair
-                if (unsubscribePosts) {
-                    unsubscribePosts();
-                    unsubscribePosts = null;
-                }
+                adminSection.classList.add('hidden');
+                if (unsubscribePosts) unsubscribePosts();
             }
         });
 
-        // Enviar Postagem
+        // Publicar Desafio
         document.getElementById('form-post').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const turmaSelecionada = document.querySelector('input[name="turma"]:checked');
             
-            if (!usuarioAtual) {
-                alert("Você precisa estar logado para publicar.");
+            if (!turmaSelecionada) {
+                alert("Por favor, clique em um botão para selecionar sua turma!");
                 return;
             }
 
-            const turma = document.getElementById('turma-select').value;
+            const turma = turmaSelecionada.value;
             const desafio = document.getElementById('desafio-input').value.trim();
             const mensagem = document.getElementById('mensagem-input').value.trim();
 
@@ -204,53 +180,75 @@
                     turma: turma,
                     desafio: desafio,
                     mensagem: mensagem,
-                    data: serverTimestamp() // Usa o timestamp oficial do servidor do Firestore
+                    data: serverTimestamp()
                 });
-                
-                // Limpa o formulário de postagem
                 document.getElementById('form-post').reset();
-                alert("Desafio publicado com sucesso!");
+                alert("Desafio publicado (+10 pontos para sua sala)!");
             } catch (error) {
-                console.error("Erro ao publicar:", error);
-                alert("Erro ao publicar: " + error.message);
+                alert("Erro ao publicar. Verifique as Regras do Firestore.");
             }
         });
 
-        // Carregar Postagens em Tempo Real do Firestore
+        // Carregar Posts e Calcular Estatísticas (Admin)
         function carregarPostagens() {
             const q = query(collection(db, "postagens"), orderBy("data", "desc"));
             
             unsubscribePosts = onSnapshot(q, (snapshot) => {
                 postsContainer.innerHTML = '';
                 
-                if (snapshot.empty) {
-                    postsContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">Nenhum desafio publicado ainda. Seja o primeiro!</p>';
-                    return;
-                }
+                let participantesUnicos = new Set();
+                let pontuacaoSalas = {}; // Cada postagem vale 10 pontos
 
                 snapshot.forEach((doc) => {
                     const post = doc.data();
+                    
+                    // Lógica para estatísticas da Isabela
+                    if(post.autor) participantesUnicos.add(post.autor);
+                    if(post.turma) {
+                        pontuacaoSalas[post.turma] = (pontuacaoSalas[post.turma] || 0) + 10;
+                    }
+
+                    // Lógica do Mural de postagens
                     const postEl = document.createElement('div');
                     postEl.className = 'post';
                     postEl.innerHTML = `
                         <div class="post-header">
-                            <span class="post-author">${escapeHTML(post.autor)} (${escapeHTML(post.turma || 'Turma não informada')})</span>
-                            <span class="post-tag">${escapeHTML(post.desafio || 'Desafio')}</span>
+                            <span class="post-author">${escapeHTML(post.autor)} - ${escapeHTML(post.turma)}</span>
+                            <span class="post-tag">${escapeHTML(post.desafio)}</span>
                         </div>
-                        <div class="post-content">${escapeHTML(post.mensagem || '')}</div>
+                        <div class="post-content">${escapeHTML(post.mensagem)}</div>
                     `;
                     postsContainer.appendChild(postEl);
                 });
-            }, (error) => {
-                console.error("Erro ao carregar postagens:", error);
+
+                // Atualiza Painel da Isabela apenas se ela estiver logada
+                if (usuarioAtual && usuarioAtual.email === ADMIN_EMAIL) {
+                    atualizarPainelAdmin(participantesUnicos, pontuacaoSalas);
+                }
             });
         }
 
-        // Função utilitária básica de segurança para evitar injeção de HTML no feed
+        function atualizarPainelAdmin(participantes, pontuacao) {
+            document.getElementById('admin-qtd-pessoas').textContent = participantes.size;
+            
+            // Lista quem participou
+            const listaQuem = Array.from(participantes).join('<br>');
+            document.getElementById('admin-quem').innerHTML = listaQuem || 'Nenhum participante ainda';
+
+            // Ranking das Salas
+            const rankingDiv = document.getElementById('admin-ranking');
+            rankingDiv.innerHTML = '';
+            
+            // Organizar do maior pro menor
+            const salasOrdenadas = Object.entries(pontuacao).sort((a, b) => b[1] - a[1]);
+            
+            salasOrdenadas.forEach(([sala, pontos]) => {
+                rankingDiv.innerHTML += `<tr><td>${sala}</td><td><strong>${pontos} pontos</strong></td></tr>`;
+            });
+        }
+
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+            return str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : '';
         }
     </script>
 </head>
@@ -258,56 +256,73 @@
 
     <header>
         <h1>🌱 Desafio Verde: Mural da Escola</h1>
-        <p>Compartilhe suas conquistas ambientais com a escola toda!</p>
     </header>
 
     <div class="container">
 
-        <!-- Área de Login e Registro -->
+        <!-- Área de Login -->
         <div id="auth-section" class="card">
-            <h3>🔑 Entrar / Criar Conta</h3>
-            <input type="email" id="email" placeholder="Seu e-mail (ex: aluno@gmail.com)" required>
-            <input type="password" id="password" placeholder="Sua senha (mínimo 6 caracteres)" required>
-            <button id="btn-login">Entrar</button>
-            <button id="btn-register" style="background-color: var(--verde-claro); color: white;">Criar Nova Conta</button>
+            <h3>🔑 Acesso ao Mural</h3>
+            <input type="email" id="email" placeholder="Seu e-mail escolar" required>
+            <input type="password" id="password" placeholder="Sua senha" required>
+            <button id="btn-login" class="btn-acao">Entrar</button>
+            <button id="btn-register" class="btn-acao" style="background-color: var(--verde-claro); color: white;">Criar Conta</button>
         </div>
 
-        <!-- Área Principal (Visível apenas após login) -->
+        <!-- Área do App -->
         <div id="app-section" class="hidden">
             
             <div class="user-info">
-                <span>Conectado como: <strong id="user-email"></strong></span>
+                <span>Bem-vindo(a), <strong id="user-email"></strong></span>
                 <button id="btn-logout" class="btn-logout">Sair</button>
             </div>
 
-            <!-- Form para Postar Novo Desafio -->
-            <div class="card">
-                <h3>📢 Registrar Desafio Concluído</h3>
-                <form id="form-post">
-                    <label for="turma-select">Sua Turma:</label>
-                    <select id="turma-select" required>
-                        <option value="6º Ano EF">6º Ano EF</option>
-                        <option value="7º Ano EF">7º Ano EF</option>
-                        <option value="8º Ano EF">8º Ano EF</option>
-                        <option value="9º Ano EF">9º Ano EF</option>
-                        <option value="1º Ano EM">1º Ano EM</option>
-                        <option value="2º Ano EM">2º Ano EM</option>
-                        <option value="3º Ano EM">3º Ano EM</option>
-                    </select>
+            <!-- 🔴 PAINEL EXCLUSIVO DA ISABELA -->
+            <div id="admin-section" class="card card-admin hidden">
+                <h3>👑 Painel da Professora / Admin</h3>
+                <p><strong>Total de Alunos Participantes:</strong> <span id="admin-qtd-pessoas">0</span></p>
+                
+                <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ccc;">
+                
+                <h4>🏆 Pontuação das Salas (10 pts por postagem)</h4>
+                <table>
+                    <thead><tr><th>Turma / Série</th><th>Pontuação Total</th></tr></thead>
+                    <tbody id="admin-ranking">
+                        <!-- Ranking via JS -->
+                    </tbody>
+                </table>
 
-                    <input type="text" id="desafio-input" placeholder="Ex: Semana 1 - Guardião da Água" required>
-                    <textarea id="mensagem-input" rows="3" placeholder="Conte como foi realizar esse desafio..." required></textarea>
+                <hr style="margin: 1rem 0; border: 0; border-top: 1px solid #ccc;">
+                
+                <h4>👥 Quem já participou (E-mails):</h4>
+                <div id="admin-quem" style="font-size: 0.9rem; color: #555; background: white; padding: 10px; border-radius: 5px;"></div>
+            </div>
+
+            <!-- Form de Postagem com Botões de Turma -->
+            <div class="card">
+                <h3>📢 Registrar Ação Verde</h3>
+                <form id="form-post">
                     
-                    <button type="submit">Publicar para Todos Verem</button>
+                    <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Selecione sua Série (Botões):</label>
+                    <div class="turma-selector">
+                        <input type="radio" id="t6" name="turma" value="6º Ano EF"><label for="t6">6º Ano</label>
+                        <input type="radio" id="t7" name="turma" value="7º Ano EF"><label for="t7">7º Ano</label>
+                        <input type="radio" id="t8" name="turma" value="8º Ano EF"><label for="t8">8º Ano</label>
+                        <input type="radio" id="t9" name="turma" value="9º Ano EF"><label for="t9">9º Ano</label>
+                        <input type="radio" id="em1" name="turma" value="1º Ano EM"><label for="em1">1º EM</label>
+                        <input type="radio" id="em2" name="turma" value="2º Ano EM"><label for="em2">2º EM</label>
+                        <input type="radio" id="em3" name="turma" value="3º Ano EM"><label for="em3">3º EM</label>
+                    </div>
+
+                    <input type="text" id="desafio-input" placeholder="Qual foi o desafio? (ex: Plantar uma semente)" required>
+                    <textarea id="mensagem-input" rows="3" placeholder="Detalhes de como você fez..." required></textarea>
+                    
+                    <button type="submit" class="btn-acao">Publicar Desafio (+10 Pontos)</button>
                 </form>
             </div>
 
-            <!-- Feed de Postagens -->
-            <h2>🏆 Mural de Ações Cumpridas</h2>
-            <div id="posts-container" style="margin-top: 1rem;">
-                <!-- Postagens entram aqui via JS -->
-            </div>
-
+            <h2>Mural da Escola</h2>
+            <div id="posts-container"></div>
         </div>
 
     </div>
