@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafio Verde: Ação Sustentável na Escola</title>
+    <title>Desafio Verde: Mural Interativo</title>
     <style>
         :root {
             --verde-escuro: #1b5e20;
@@ -15,334 +15,233 @@
             --texto: #1a251a;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--cinza-fundo);
-            color: var(--texto);
-            line-height: 1.6;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--cinza-fundo); color: var(--texto); line-height: 1.6; }
 
         header {
             background: linear-gradient(135deg, var(--verde-escuro), var(--verde-principal));
-            color: #ffffff;
-            padding: 2.5rem 1rem;
-            text-align: center;
+            color: #ffffff; padding: 2rem 1rem; text-align: center;
             border-bottom: 6px solid var(--amarelo-principal);
         }
 
-        header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Cartões e Formulários */
+        .card {
+            background: white; border-radius: 10px; padding: 1.5rem;
+            margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--verde-principal);
         }
 
-        header p {
-            color: var(--amarelo-principal);
-            font-weight: 600;
-            font-size: 1.1rem;
+        .card h3 { color: var(--verde-escuro); margin-bottom: 1rem; }
+
+        input, select, textarea, button {
+            width: 100%; padding: 0.8rem; margin-top: 0.5rem; margin-bottom: 1rem;
+            border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+        button {
+            background-color: var(--amarelo-principal); color: var(--verde-escuro);
+            font-weight: bold; border: none; cursor: pointer; transition: 0.2s;
         }
 
-        .tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            justify-content: center;
+        button:hover { background-color: #f9a825; }
+
+        /* Status de Login */
+        .user-info {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--amarelo-suave); padding: 1rem; border-radius: 8px;
+            margin-bottom: 1.5rem; border: 1px solid var(--amarelo-principal);
         }
 
-        .tab-btn {
-            background-color: #ffffff;
-            border: 2px solid var(--verde-principal);
-            color: var(--verde-escuro);
-            padding: 0.6rem 1.2rem;
-            font-weight: bold;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .btn-logout { width: auto; margin: 0; padding: 0.4rem 1rem; background-color: #d32f2f; color: white; }
+
+        /* Feed de Postagens */
+        .post {
+            background: white; border-radius: 8px; padding: 1rem;
+            margin-bottom: 1rem; border: 1px solid #e0e0e0;
         }
 
-        .tab-btn:hover {
-            background-color: var(--amarelo-suave);
-        }
+        .post-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
+        .post-author { font-weight: bold; color: var(--verde-escuro); }
+        .post-tag { background: var(--amarelo-principal); padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: bold; font-size: 0.8rem; }
+        .post-content { margin-top: 0.8rem; font-size: 1rem; }
 
-        .tab-btn.active {
-            background-color: var(--amarelo-principal);
-            color: var(--verde-escuro);
-            border-color: var(--amarelo-principal);
-        }
-
-        .turma-content {
-            display: none;
-            background-color: #ffffff;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border-left: 6px solid var(--verde-claro);
-        }
-
-        .turma-content.active {
-            display: block;
-        }
-
-        .turma-header {
-            color: var(--verde-escuro);
-            margin-bottom: 1rem;
-            border-bottom: 2px solid var(--amarelo-suave);
-            padding-bottom: 0.5rem;
-        }
-
-        .desafios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .desafio-card {
-            background-color: var(--amarelo-suave);
-            border: 1px solid #ffe082;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-
-        .desafio-card h4 {
-            color: var(--verde-escuro);
-            margin-bottom: 0.5rem;
-        }
-
-        .dica-box {
-            background-color: #e8f5e9;
-            border: 1px solid var(--verde-claro);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 2rem;
-        }
-
-        .dica-box h3 {
-            color: var(--verde-escuro);
-            margin-bottom: 0.5rem;
-        }
-
-        footer {
-            text-align: center;
-            padding: 1.5rem;
-            background-color: var(--verde-escuro);
-            color: #ffffff;
-            margin-top: 3rem;
-        }
+        .hidden { display: none; }
     </style>
+
+    <!-- SDK do Firebase (Versão Modular via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIGURAÇÃO DO SEU FIREBASE (Substitua pelos seus dados do console do Firebase)
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Variáveis de Estado
+        let usuarioAtual = null;
+
+        // Elementos DOM
+        const authSection = document.getElementById('auth-section');
+        const appSection = document.getElementById('app-section');
+        const userInfo = document.getElementById('user-info');
+        const userEmailSpan = document.getElementById('user-email');
+        const postsContainer = document.getElementById('posts-container');
+
+        // Autenticação: Cadastro / Login
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert("Erro ao entrar: " + error.message);
+            }
+        });
+
+        document.getElementById('btn-register').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Conta criada com sucesso!");
+            } catch (error) {
+                alert("Erro ao cadastrar: " + error.message);
+            }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // Monitorar Estado do Usuário
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                usuarioAtual = user;
+                userEmailSpan.textContent = user.email;
+                authSection.classList.add('hidden');
+                appSection.classList.remove('hidden');
+                carregarPostagens();
+            } else {
+                usuarioAtual = null;
+                authSection.classList.remove('hidden');
+                appSection.classList.add('hidden');
+            }
+        });
+
+        // Enviar Postagem
+        document.getElementById('form-post').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const turma = document.getElementById('turma-select').value;
+            const desafio = document.getElementById('desafio-input').value;
+            const mensagem = document.getElementById('mensagem-input').value;
+
+            try {
+                await addDoc(collection(db, "postagens"), {
+                    autor: usuarioAtual.email,
+                    turma: turma,
+                    desafio: desafio,
+                    mensagem: mensagem,
+                    data: new Date()
+                });
+                document.getElementById('mensagem-input').value = '';
+                document.getElementById('desafio-input').value = '';
+                alert("Desafio publicado!");
+            } catch (error) {
+                alert("Erro ao publicar: " + error.message);
+            }
+        });
+
+        // Carregar Postagens em Tempo Real
+        function carregarPostagens() {
+            const q = query(collection(db, "postagens"), orderBy("data", "desc"));
+            onSnapshot(q, (snapshot) => {
+                postsContainer.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const post = doc.data();
+                    const postEl = document.createElement('div');
+                    postEl.className = 'post';
+                    postEl.innerHTML = `
+                        <div class="post-header">
+                            <span class="post-author">${post.autor} (${post.turma})</span>
+                            <span class="post-tag">${post.desafio}</span>
+                        </div>
+                        <div class="post-content">${post.mensagem}</div>
+                    `;
+                    postsContainer.appendChild(postEl);
+                });
+            });
+        }
+    </script>
 </head>
 <body>
 
     <header>
-        <h1>🌱 Desafio Verde: 1 Mês pelo Planeta</h1>
-        <p>Ação Sustentável da Escola • Escolha sua turma e participe!</p>
+        <h1>🌱 Desafio Verde: Mural da Escola</h1>
+        <p>Compartilhe suas conquistas ambientais com a escola toda!</p>
     </header>
 
     <div class="container">
-        <!-- Navegação de Turmas -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="mostrarTurma('ef6')">6º Ano EF</button>
-            <button class="tab-btn" onclick="mostrarTurma('ef7')">7º Ano EF</button>
-            <button class="tab-btn" onclick="mostrarTurma('ef8')">8º Ano EF</button>
-            <button class="tab-btn" onclick="mostrarTurma('ef9')">9º Ano EF</button>
-            <button class="tab-btn" onclick="mostrarTurma('em1')">1º Ano EM</button>
-            <button class="tab-btn" onclick="mostrarTurma('em2')">2º Ano EM</button>
-            <button class="tab-btn" onclick="mostrarTurma('em3')">3º Ano EM</button>
+
+        <!-- Área de Login e Registro -->
+        <div id="auth-section" class="card">
+            <h3>🔑 Entrar / Criar Conta</h3>
+            <input type="email" id="email" placeholder="Seu e-mail (ex: aluno@gmail.com)" required>
+            <input type="password" id="password" placeholder="Sua senha" required>
+            <button id="btn-login">Entrar</button>
+            <button id="btn-register" style="background-color: var(--verde-claro); color: white;">Criar Nova Conta</button>
         </div>
 
-        <!-- Conteúdos de Cada Turma -->
-
-        <div id="ef6" class="turma-content active">
-            <h2 class="turma-header">Desafios - 6º Ano do Ensino Fundamental</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Guardião da Água</h4>
-                    <p>Feche a torneira ao escovar os dentes e avise a coordenação sobre qualquer vazamento na escola.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Plástico Zero no Lanche</h4>
-                    <p>Traga sua garrafa reutilizável todos os dias da semana para evitar descartáveis.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Caça ao Lixo</h4>
-                    <p>Junte-se aos colegas para recolher pequenos resíduos esquecidos no pátio após o intervalo.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Diário Verde</h4>
-                    <p>Desenhe ou escreva sobre uma planta ou árvore da escola para expor no mural da sala.</p>
-                </div>
+        <!-- Área Principal (Visível apenas após login) -->
+        <div id="app-section" class="hidden">
+            
+            <div class="user-info">
+                <span>Conectado como: <strong id="user-email"></strong></span>
+                <button id="btn-logout" class="btn-logout">Sair</button>
             </div>
-        </div>
 
-        <div id="ef7" class="turma-content">
-            <h2 class="turma-header">Desafios - 7º Ano do Ensino Fundamental</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Separação de Papel</h4>
-                    <p>Crie um ponto de coleta de papel limpo dentro da sala para ser reciclado no final da semana.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Lanche sem Desperdício</h4>
-                    <p>Calcule o tamanho das suas porções para não deixar sobras de alimentos na cantina.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Energia Consciente</h4>
-                    <p>Certifique-se de apagar as luzes e desligar o ventilador ao sair da sala de aula.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Plante uma Mudinha</h4>
-                    <p>Traga uma muda de planta para cultivar no jardim da escola ou no vaso da sala.</p>
-                </div>
+            <!-- Form para Postar Novo Desafio -->
+            <div class="card">
+                <h3>📢 Registrar Desafio Concluído</h3>
+                <form id="form-post">
+                    <label>Sua Turma:</label>
+                    <select id="turma-select" required>
+                        <option value="6º Ano EF">6º Ano EF</option>
+                        <option value="7º Ano EF">7º Ano EF</option>
+                        <option value="8º Ano EF">8º Ano EF</option>
+                        <option value="9º Ano EF">9º Ano EF</option>
+                        <option value="1º Ano EM">1º Ano EM</option>
+                        <option value="2º Ano EM">2º Ano EM</option>
+                        <option value="3º Ano EM">3º Ano EM</option>
+                    </select>
+
+                    <input type="text" id="desafio-input" placeholder="Ex: Semana 1 - Guardião da Água" required>
+                    <textarea id="mensagem-input" rows="3" placeholder="Conte como foi realizar esse desafio..." required></textarea>
+                    
+                    <button type="submit">Publicar para Todos Verem</button>
+                </form>
             </div>
-        </div>
 
-        <div id="ef8" class="turma-content">
-            <h2 class="turma-header">Desafios - 8º Ano do Ensino Fundamental</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Auditoria de Recicláveis</h4>
-                    <p>Verifique se as lixeiras seletivas da escola estão sendo usadas corretamente durante a semana.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Caneca Sustentável</h4>
-                    <p>Elimine totalmente o uso de copos descartáveis na escola usando uma caneca própria.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Consumo Consciente</h4>
-                    <p>Reorganize o uso de materiais escolares para reaproveitar cadernos e lápis do ano anterior.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Cartaz Informativo</h4>
-                    <p>Crie um cartaz educativo sobre biodiversidade local para colar nos corredores.</p>
-                </div>
+            <!-- Feed de Postagens -->
+            <h2>🏆 Mural de Ações Cumpridas</h2>
+            <div id="posts-container" style="margin-top: 1rem;">
+                <!-- Postagens entram aqui via JS -->
             </div>
+
         </div>
 
-        <div id="ef9" class="turma-content">
-            <h2 class="turma-header">Desafios - 9º Ano do Ensino Fundamental</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Campanha Óleo Usado</h4>
-                    <p>Mobilize a sala para arrecadar garrafas de óleo de cozinha usado trazidas de casa.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Pegada Hidrica</h4>
-                    <p>Pesquise e compartilhe com a turma quanta água é usada para produzir o lanche do dia.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Patrulha da Luz</h4>
-                    <p>Fique responsável por checar e desligar aparelhos que ficaram ligados em stand-by nas salas.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Oficina de Reuso</h4>
-                    <p>Transforme embalagens plásticas descartadas em vasos ou organizadores úteis para a escola.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="em1" class="turma-content">
-            <h2 class="turma-header">Desafios - 1º Ano do Ensino Médio</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Logística Reversa de Eletrônicos</h4>
-                    <p>Organize um Ponto de Entrega Voluntária (PEV) para pilhas e baterias esgotadas na escola.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Desafio Mobilidade</h4>
-                    <p>Vá para a escola a pé, de bicicleta ou organizando carona solidária com colegas.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Análise do Lixo da Sala</h4>
-                    <p>Pese ou meça o volume de lixo produzido pela turma em uma semana e trace metas de redução.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Infográfico Ambiental</h4>
-                    <p>Elabore um infográfico digital sobre o impacto dos plásticos de uso único para postar nas redes da escola.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="em2" class="turma-content">
-            <h2 class="turma-header">Desafios - 2º Ano do Ensino Médio</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Horta Urbana / Compostagem</h4>
-                    <p>Inicie ou ajude a manter a leira de compostagem com restos orgânicos da cantina.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Consumo Crítico de Roupas</h4>
-                    <p>Promova um dia de troca de livros ou roupas usadas entre os estudantes (Brechó Solidário).</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Mapeamento do Desperdício</h4>
-                    <p>Identifique pontos da escola que precisam de melhoria na gestão de energia ou água.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Mini-Podcast ou Vídeo</h4>
-                    <p>Grave um conteúdo de 1 minuto sobre um problema ambiental da comunidade local e como resolvê-lo.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="em3" class="turma-content">
-            <h2 class="turma-header">Desafios - 3º Ano do Ensino Médio</h2>
-            <div class="desafios-grid">
-                <div class="desafio-card">
-                    <h4>Semana 1: Mentoria Ambiental</h4>
-                    <p>Visite as turmas do 6º ano para explicar o projeto e incentivar a participação dos mais novos.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 2: Projeto de Impacto</h4>
-                    <p>Escreva uma proposta simples de melhoria sustentável e apresente para a direção da escola.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 3: Pegada de Carbono</h4>
-                    <p>Promova um debate em sala sobre como o consumo diário afeta as mudanças climáticas.</p>
-                </div>
-                <div class="desafio-card">
-                    <h4>Semana 4: Legado Verde</h4>
-                    <p>Organize o plantio de uma árvore nativa no espaço escolar como símbolo da formatura da turma.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bloco Informativo Geral -->
-        <div class="dica-box">
-            <h3>🏆 Como validar sua participação?</h3>
-            <p>Ao cumprir cada desafio semanal, tire uma foto ou faça um registro do resultado e envie para a coordenação ou publique marcando as redes da escola com a tag <strong>#EscolaSustentavel</strong>!</p>
-        </div>
     </div>
 
-    <footer>
-        <p>Projeto Meio Ambiente na Escola • Construindo um futuro mais sustentável juntas e juntos!</p>
-    </footer>
-
-    <script>
-        function mostrarTurma(idTurma) {
-            // Esconde todo o conteúdo
-            const conteudos = document.querySelectorAll('.turma-content');
-            conteudos.forEach(c => c.classList.remove('active'));
-
-            // Desativa todos os botões
-            const botoes = document.querySelectorAll('.tab-btn');
-            botoes.forEach(b => b.classList.remove('active'));
-
-            // Ativa o conteúdo e o botão selecionados
-            document.getElementById(idTurma).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-    </script>
 </body>
 </html>
